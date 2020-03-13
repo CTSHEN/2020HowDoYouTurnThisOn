@@ -49,19 +49,19 @@ class PurePursuitControl:
 
         # step by step
         # first, you need to calculate the look ahead distance Ld by formula
-	Ld = self.kp *v + self.Lfc
+        Ld = self.kp *v + self.Lfc
         # second, you need to find a point(target) on the path which distance between the path and model is as same as the Ld
         target_idx, target_dist = self._search_target((x,y),Ld,min_idx)
-	target_x = self.path[target_idx,0]	
-	target_y = self.path[target_idx,1]
+        target_x = self.path[target_idx,0]	
+        target_y = self.path[target_idx,1]
         ### hint: (you first need to find the nearest point and then find the point(target) backward, this will make your model won't go back)
         ### hint: (if you can not find a point(target) on the path which distance between the path and model is as same as the Ld, you need to find a similar one)
         # third, you need to calculate alpha
-	alpha = math.atan((y-target_y)/(x-target_x)) - yaw
-	R = Ld/2/np.sin(alpha)
+        alpha = math.atan((y-target_y)/(x-target_x)) - yaw
+        R = Ld/2/np.sin(alpha)
         # now, you can calculate the w
         next_w = v/R
-	target = self.path[target_idx,:]
+        target = self.path[target_idx,:]
         # The next_w is Pure Pursuit Control's output
         # The target is the point on the path which you find
         #####################################################################

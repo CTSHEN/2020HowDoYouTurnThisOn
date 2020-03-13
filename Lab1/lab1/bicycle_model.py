@@ -85,9 +85,9 @@ class KinematicModel:
 	#self.x=self.x+self.dt*self.v*np.cos(self.yaw+beta)
 	#self.y=self.y+self.dt*self.v*np.sin(self.yaw+beta)
 	#self.yaw=self.yaw-self.dt*self.v*np.sin(beta/(self.car_r+self.car_f))
-	self.x=self.x+self.dt*self.v*np.cos(self.yaw)
-	self.y=self.y+self.dt*self.v*np.sin(self.yaw)
-	self.yaw=self.yaw+self.dt*self.v*np.tan(np.deg2rad(self.delta))/(self.car_r+self.car_f)
+        self.x=self.x+self.dt*self.v*np.cos(self.yaw)
+        self.y=self.y+self.dt*self.v*np.sin(self.yaw)
+        self.yaw=self.yaw+self.dt*self.v*np.tan(np.deg2rad(self.delta)/self.l)
 
         #####################################################################
 

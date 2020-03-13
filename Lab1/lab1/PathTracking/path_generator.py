@@ -21,4 +21,4 @@ def path2(p1 = 80.0):
     
 if __name__ == "__main__":
 	path = path2()	
-	print(path[:,2])
+	print(path[:,0])

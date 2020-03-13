@@ -2,7 +2,7 @@ import numpy as np
 import math 
 import os
 class StanleyControl:
-    def __init__(self, kp=0.5):
+    def __init__(self, kp=0.7):
         self.path = None
         self.kp = kp
 
@@ -39,16 +39,16 @@ class StanleyControl:
         # step by step
         # first you need to find the nearest point on the path(centered on the front wheel, previous work all on the back wheel)
         target_idx, target_dist = self._search_nearest((x,y,yaw),l)
- 	target = self.path[target_idx, :]
+        target = self.path[target_idx, :]
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
         theta_e = self.path[target_idx, 2] - yaw
 
 	# third you need to calculate the v front(vf) and error(e)
         vf = self.path[target_idx, 3]	
-	e = target_dist
-	ke = self.kp *e
+        e = target_dist
+        ke = 1*e
         # now, you can calculate the delta
-	next_delta = math.atan(-ke/vf) +np.rad2deg( theta_e)
+        next_delta = math.atan(-ke/vf) +np.rad2deg( theta_e)
         # The next_delta is Stanley Control's output
         # The target is the point on the path which you find
         ###############################################################################

@@ -77,9 +77,9 @@ class KinematicModel:
         #####################################################################
 
         # You need to calculate basic Kinematic Model state here.(x, y, yaw)
-	self.yaw=self.yaw+ self.w *self.dt
- 	self.x=self.x+self.dt*self.v*np.cos(self.yaw)
-	self.y=self.y+self.dt*self.v*np.sin(self.yaw)
+        self.yaw=self.yaw+ self.w *self.dt
+        self.x=self.x+self.dt*self.v*np.cos(self.yaw)
+        self.y=self.y+self.dt*self.v*np.sin(self.yaw)
 	
         #####################################################################
 
