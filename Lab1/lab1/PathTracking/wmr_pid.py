@@ -32,7 +32,7 @@ class PidControl:
             return None, None
         
         # Extract State
-        x, y, dt = state["x"], state["y"], state["dt"]
+        x, y, yaw, dt = state["x"], state["y"], state["yaw"], state["dt"]
 
         # Search Nesrest Target
         min_idx, min_dist = self._search_nearest((x,y))
@@ -45,9 +45,11 @@ class PidControl:
 
         # step by step
         # first, you need to calculate the angle(between model and the nearest point(target) on the path), you can use the parameter "self.path" and "min_idx" to get it
-        # second, you need to calculate the error(e(t)) in PID control, you can use the parameter "min_dist" and "angle" to get it
-        # now, you can caculate the P, I and D
+	d_th = self.path[min_idx,2] - yaw        
+	# second, you need to calculate the error(e(t)) in PID control, you can use the parameter "min_dist" and "angle" to get it
 
+        # now, you can caculate the P, I and D
+        next_w = self.kp*d_th
         # The next_w is PID Control's output
         ############################################################################
         return next_w, self.path[min_idx]
@@ -73,7 +75,7 @@ if __name__ == "__main__":
     controller.set_path(path)
 
     while(True):
-        print("\rState: "+car.state_str(), end="\t")
+        print("\rState: "+car.state_str()+"\t")
 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)

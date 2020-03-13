@@ -1,5 +1,6 @@
 import numpy as np 
-
+import math 
+import os
 class StanleyControl:
     def __init__(self, kp=0.5):
         self.path = None
@@ -8,18 +9,19 @@ class StanleyControl:
     def set_path(self, path):
         self.path = path.copy()
     
-    def _search_nearest(self, pos):
+    def _search_nearest(self, pos,l):
         min_dist = 99999999
         min_id = -1
+        pos_f = np.dot([np.cos(pos[2]),np.sin(pos[2])], [l,0]) + [pos[0],pos[1]]
         for i in range(self.path.shape[0]):
-            dist = (pos[0] - self.path[i,0])**2 + (pos[1] - self.path[i,1])**2
+            dist = (pos_f[0] - self.path[i,0])**2 + (pos_f[1] - self.path[i,1])**2
             if dist < min_dist:
                 min_dist = dist
                 min_id = i
         return min_id, min_dist
 
     # State: [x, y, yaw, delta, v, l]
-    def feedback(self, state):
+    def feedback(self, state,car):
         # Check Path
         if self.path is None:
             print("No path !!")
@@ -36,10 +38,17 @@ class StanleyControl:
 
         # step by step
         # first you need to find the nearest point on the path(centered on the front wheel, previous work all on the back wheel)
+        target_idx, target_dist = self._search_nearest((x,y,yaw),l)
+ 	target = self.path[target_idx, :]
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
-        # third you need to calculate the v front(vf) and error(e)
-        # now, you can calculate the delta
+        theta_e = self.path[target_idx, 2] - yaw
 
+	# third you need to calculate the v front(vf) and error(e)
+        vf = self.path[target_idx, 3]	
+	e = target_dist
+	ke = self.kp *e
+        # now, you can calculate the delta
+	next_delta = math.atan(-ke/vf) +np.rad2deg( theta_e)
         # The next_delta is Stanley Control's output
         # The target is the point on the path which you find
         ###############################################################################
@@ -54,6 +63,7 @@ if __name__ == "__main__":
 
     # Path
     path = path_generator.path2()
+    print(path[3,:])
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
@@ -66,8 +76,8 @@ if __name__ == "__main__":
     controller.set_path(path)
 
     while(True):
-        print("\rState: "+car.state_str(), end="\t")
-
+        print("\rState: "+car.state_str()+"\t")
+        
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
         target_v = 40 if end_dist > 265 else 0
@@ -75,7 +85,7 @@ if __name__ == "__main__":
 
         # Stanley Lateral Control
         state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta, "v":car.v, "l":car.l}
-        next_delta, target = controller.feedback(state)
+        next_delta, target = controller.feedback(state,car)
         car.control(next_a, next_delta)
         
         # Update State & Render

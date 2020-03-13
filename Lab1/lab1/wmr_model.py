@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-def _rot_pos(x,y,phi_):
-    phi = np.deg2rad(phi_)
+def _rot_pos(x,y,phi):
+
     return np.array((x*np.cos(phi)+y*np.sin(phi), -x*np.sin(phi)+y*np.cos(phi)))
 
 def _draw_rectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
@@ -77,7 +77,10 @@ class KinematicModel:
         #####################################################################
 
         # You need to calculate basic Kinematic Model state here.(x, y, yaw)
-
+	self.yaw=self.yaw+ self.w *self.dt
+ 	self.x=self.x+self.dt*self.v*np.cos(self.yaw)
+	self.y=self.y+self.dt*self.v*np.sin(self.yaw)
+	
         #####################################################################
 
         self.record.append((self.x, self.y, self.yaw))
@@ -147,7 +150,7 @@ if __name__ == "__main__":
     car = KinematicModel()
     car.init_state((300,300,0))
     while(True):
-        print("\rx={}, y={}, v={}, yaw={}, w={}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],str(car.w)[:5]), end="\t")
+        print("\rx={}, y={}, v={}, yaw={}, w={}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],str(car.w)[:5])+"\t")
         img = np.ones((600,600,3))
         car.update()
         img = car.render(img)
@@ -155,7 +158,7 @@ if __name__ == "__main__":
         cv2.imshow("demo", img)
         k = cv2.waitKey(1)
         if k == ord("a"):
-            car.w += 5
+            car.w += 0.05
         elif k == ord("d"):
             car.w -= 5
         elif k == ord("w"):

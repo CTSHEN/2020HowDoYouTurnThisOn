@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
 import sys
+import math
 
 def _rot_pos(x,y,phi_):
-    phi = np.deg2rad(phi_)
+    phi = phi_
     return np.array((x*np.cos(phi)+y*np.sin(phi), -x*np.sin(phi)+y*np.cos(phi)))
 
 def _draw_rectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
@@ -19,18 +20,18 @@ def _draw_rectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
 
 class KinematicModel:
     def __init__(self,
-            v_range = 50,
-            a_range = 5,
-            delta_range = 45,
-            l = 40,     # distance between rear and front wheel
-            d = 10,     # Wheel Distance
+            v_range = 50.0,
+            a_range = 5.0,
+            delta_range = 45.0,
+            l = 40.0,     # distance between rear and front wheel
+            d = 10.0,     # Wheel Distance
             # Wheel size
-            wu = 10,     
-            wv = 4,
+            wu = 10.0,     
+            wv = 4.0,
             # Car size
-            car_w = 28,
-            car_f = 50,
-            car_r = 10,
+            car_w = 28.0,
+            car_f = 50.0,
+            car_r = 10.0,
             dt = 0.1
         ):
         # Rear Wheel as Origin Point
@@ -68,6 +69,7 @@ class KinematicModel:
         self.record = []
 
     def update(self):
+
         self.v += self.a * self.dt
         # Speed Constrain
         if self.v > self.v_range:
@@ -79,9 +81,13 @@ class KinematicModel:
         #####################################################################
 
         # You need to calculate basic Kinematic Model state here.(x, y, yaw)
-        self.x += self.v*np.cos(self.yaw)*self.dt
-        self.y += self.v*np.sin(self.yaw)*self.dt
-        self.yaw += self.v*np.tan(self.delta)/self.l
+	#beta = math.atan(float(self.car_r/(self.car_r+self.car_f))*math.tan( self.delta))
+	#self.x=self.x+self.dt*self.v*np.cos(self.yaw+beta)
+	#self.y=self.y+self.dt*self.v*np.sin(self.yaw+beta)
+	#self.yaw=self.yaw-self.dt*self.v*np.sin(beta/(self.car_r+self.car_f))
+	self.x=self.x+self.dt*self.v*np.cos(self.yaw)
+	self.y=self.y+self.dt*self.v*np.sin(self.yaw)
+	self.yaw=self.yaw+self.dt*self.v*np.tan(np.deg2rad(self.delta))/(self.car_r+self.car_f)
 
         #####################################################################
 
@@ -142,8 +148,8 @@ class KinematicModel:
         w3 = _rot_pos( 0, self.d, -self.yaw) + np.array((self.x,self.y))
         w4 = _rot_pos( 0,-self.d, -self.yaw) + np.array((self.x,self.y))
         # 4 Wheels
-        img = _draw_rectangle(img,int(w1[0]),int(w1[1]),self.wu,self.wv,-self.yaw-self.delta)
-        img = _draw_rectangle(img,int(w2[0]),int(w2[1]),self.wu,self.wv,-self.yaw-self.delta)
+        img = _draw_rectangle(img,int(w1[0]),int(w1[1]),self.wu,self.wv,-self.yaw-np.deg2rad(self.delta))
+        img = _draw_rectangle(img,int(w2[0]),int(w2[1]),self.wu,self.wv,-self.yaw-np.deg2rad(self.delta))
         img = _draw_rectangle(img,int(w3[0]),int(w3[1]),self.wu,self.wv,-self.yaw)
         img = _draw_rectangle(img,int(w4[0]),int(w4[1]),self.wu,self.wv,-self.yaw)
         # Axle
@@ -156,7 +162,7 @@ if __name__ == "__main__":
     car = KinematicModel()
     car.init_state((300,300,0))
     while(True):
-        print("\rState: "+car.state_str(), end="\t")
+        print("\rState: "+car.state_str()+"\t")
         img = np.ones((600,600,3))
         car.update()
         img = car.render(img)
@@ -168,7 +174,7 @@ if __name__ == "__main__":
         elif k == ord("d"):
             car.delta -= 5
         elif k == ord("w"):
-            car.v += 4
+            car.v += 3
         elif k == ord("s"):
             car.v -= 4
         elif k == 27:

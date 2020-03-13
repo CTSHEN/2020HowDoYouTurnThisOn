@@ -1,5 +1,5 @@
 import numpy as np 
-
+import math
 class PurePursuitControl:
     def __init__(self, kp=1, Lfc=10):
         self.path = None
@@ -19,6 +19,16 @@ class PurePursuitControl:
                 min_id = i
         return min_id, min_dist
 
+    def _search_target(self, pos,Ld,ind_near):
+        min_dist = 99999999
+        min_id = -1
+	
+        for i in range(ind_near,self.path.shape[0]):
+            dist = (pos[0] - self.path[i,0])**2 + (pos[1] - self.path[i,1])**2
+            if (dist -Ld) < min_dist:
+                min_dist = dist
+                min_id = i
+        return min_id, min_dist
     def feedback(self, state):
         # Check Path
         if self.path is None:
@@ -39,12 +49,19 @@ class PurePursuitControl:
 
         # step by step
         # first, you need to calculate the look ahead distance Ld by formula
+	Ld = self.kp *v + self.Lfc
         # second, you need to find a point(target) on the path which distance between the path and model is as same as the Ld
+        target_idx, target_dist = self._search_target((x,y),Ld,min_idx)
+	target_x = self.path[target_idx,0]	
+	target_y = self.path[target_idx,1]
         ### hint: (you first need to find the nearest point and then find the point(target) backward, this will make your model won't go back)
         ### hint: (if you can not find a point(target) on the path which distance between the path and model is as same as the Ld, you need to find a similar one)
         # third, you need to calculate alpha
-        # now, you can calculate the ω
-
+	alpha = math.atan((y-target_y)/(x-target_x)) - yaw
+	R = Ld/2/np.sin(alpha)
+        # now, you can calculate the w
+        next_w = v/R
+	target = self.path[target_idx,:]
         # The next_w is Pure Pursuit Control's output
         # The target is the point on the path which you find
         #####################################################################
@@ -70,7 +87,7 @@ if __name__ == "__main__":
     controller.set_path(path)
 
     while(True):
-        print("\rState: "+car.state_str(), end="\t")
+        print("\rState: "+car.state_str()+"\t")
 
         # ================= Control Algorithm ================= 
         # PID Longitude Control
