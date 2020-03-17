@@ -1,7 +1,7 @@
 import numpy as np 
 import math
 class PidControl:
-    def __init__(self, kp=0.4, ki=0.0001, kd=0.5):
+    def __init__(self, kp=0.0004, ki=0.0001, kd=0.5):
         self.path = None
         self.kp = kp
         self.ki = ki
@@ -52,10 +52,10 @@ class PidControl:
         self.acc_ep += dt*ep
         diff_ep = (ep-self.last_ep) /dt      
 	# second, you need to calculate the error(e(t)) in PID control, you can use the parameter "min_dist" and "angle" to get it
-        next_w = self.kp*ep + self.ki*self.acc_ep + self.kd*diff_ep
+        next_w = (self.kp*ep + self.ki*self.acc_ep + self.kd*diff_ep)
         self.last_ep =ep
         # now, you can caculate the P, I and D
-
+	print (ep)
         # The next_w is PID Control's output
         ############################################################################
         return next_w, self.path[min_idx]
