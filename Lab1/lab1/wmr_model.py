@@ -161,7 +161,7 @@ if __name__ == "__main__":
         if k == ord("a"):
             car.w += 0.05
         elif k == ord("d"):
-            car.w -= 5
+            car.w -= 0.05
         elif k == ord("w"):
             car.v += 4
         elif k == ord("s"):
