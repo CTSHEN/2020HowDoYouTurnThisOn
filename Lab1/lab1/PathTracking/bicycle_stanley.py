@@ -46,7 +46,7 @@ class StanleyControl:
 	# third you need to calculate the v front(vf) and error(e)
         vf = self.path[target_idx, 3]	
         e = target_dist
-        ke = 1*e
+        ke = self.kp*e
         # now, you can calculate the delta
         next_delta = math.atan(-ke/vf) +np.rad2deg( theta_e)
         # The next_delta is Stanley Control's output
