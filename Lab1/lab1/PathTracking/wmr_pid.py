@@ -48,9 +48,9 @@ class PidControl:
         # second, you need to calculate the error(e(t)) in PID control, you can use the parameter "min_dist" and "angle" to get it
         # now, you can caculate the P, I and D
         angle = np.arctan2((self.path[min_idx,1]-y), self.path[min_idx,0]-x)
-        print(angle)
+        #print(np.sin(angle))
         ep = min_dist * np.sin(angle)
-        print(ep)
+        #print(ep)
         self.acc_ep += dt * ep
         diff_ep = (ep - self.last_ep)/dt
         next_w = self.kp * ep + self.ki * self.acc_ep + self.kd * diff_ep
