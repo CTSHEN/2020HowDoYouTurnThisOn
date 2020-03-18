@@ -12,9 +12,10 @@ class StanleyControl:
     def _search_nearest(self, pos,l):
         min_dist = 99999999
         min_id = -1
-        pos_f = np.dot([np.cos(pos[2]),np.sin(pos[2])], [l,0]) + [pos[0],pos[1]]
+        pos_f_x = l*np.cos(pos[2]) + pos[0]
+        pos_f_y = l*np.sin(pos[2]) + pos[1]
         for i in range(self.path.shape[0]):
-            dist = (pos_f[0] - self.path[i,0])**2 + (pos_f[1] - self.path[i,1])**2
+            dist = (pos_f_x - self.path[i,0])**2 + (pos_f_y - self.path[i,1])**2
             if dist < min_dist:
                 min_dist = dist
                 min_id = i
