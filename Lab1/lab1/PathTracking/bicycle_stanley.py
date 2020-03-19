@@ -2,7 +2,7 @@ import numpy as np
 import math 
 import os
 class StanleyControl:
-    def __init__(self, kp=0.7):
+    def __init__(self, kp=0.07):
         self.path = None
         self.kp = kp
 
@@ -43,18 +43,20 @@ class StanleyControl:
         target = self.path[target_idx, :]
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
         theta_e = self.path[target_idx, 2] - yaw
-
 	# third you need to calculate the v front(vf) and error(e)
         vf = self.path[target_idx, 3]	
 	#e = (target[0]-x)*np.cos(target[2]) + (target[1]-x)*np.sin(target[2])
         e = math.sqrt(target_dist)
-        print(e)
+
         ke = self.kp*e
         # now, you can calculate the delta
-        if v==0:
+        if v==0 or ke/v >1:
             next_delta = np.rad2deg( theta_e)
+            if v!=0:
+                print(ke/v)
         else:
-            next_delta =math.atan(-ke/v/np.cos(np.deg2rad(delta))) +np.rad2deg( theta_e) 
+            next_delta =np.rad2deg(math.asin(-ke/v) + theta_e) 
+
         # The next_delta is Stanley Control's output
         # The target is the point on the path which you find
         ###############################################################################
@@ -68,8 +70,7 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path2()
-    print(path[3,:])
+    path = path_generator.path1()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-        target_v = 40 if end_dist > 265 else 0
+        target_v =40 if end_dist > 265 else 0
         next_a = 0.1*(target_v - car.v)
 
         # Stanley Lateral Control
