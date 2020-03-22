@@ -21,6 +21,7 @@ class PurePursuitControl:
 
     def feedback(self, state):
         # Check Path
+        global targetIdx
         if self.path is None:
             print("No path !!")
             return None, None
@@ -39,26 +40,38 @@ class PurePursuitControl:
 
         # step by step
         # first, you need to calculate the look ahead distance Ld by formula
-        Ld = self.kp*v + self.Lfc
+        Ld = self.kp * v + self.Lfc
         # second, you need to find a point(target) on the path which distance between the path and model is as same as the Ld
         ### hint: (you first need to find the nearest point and then find the point(target) backward, this will make your model won't go back)
         ### hint: (if you can not find a point(target) on the path which distance between the path and model is as same as the Ld, you need to find a similar one)
+        """
+        while min_dist < Ld:#
+            #min_idx, min_dist = self._search_nearest((x,y))
+            #target_x = np.arange(0, self.path[min_idx, 0] + 1, 1)
+            #target_y = [np.sin(ix / 5.0) * ix / 2.0 for ix in target_x]
+            #min_dist += 1
+            min_idx, min_dist = self._search_nearest((x, y))
+            #min_idx, min_dist = self._search_nearest((self.path[min_idx, 0],self.path[min_idx, 1]))
+        # third, you need to calculate alpha
+        alpha = np.arctan2(y - self.path[min_idx, 1], x - self.path[min_idx, 0]) - yaw#np.deg2rad()
+        # now, you can calculate the ω
+        w = (2.0 * v * np.sin(alpha)) / Ld
+        next_w = w / 360
+        target = [self.path[min_idx, 0]+1, self.path[min_idx, 1]+1]
+        """
         for i in range(min_idx, self.path.shape[0]):
-            dist = (self.path[i,0] - self.path[min_idx,0])**2 + (self.path[i,1] - self.path[min_idx,1])**2
+            dist = (self.path[i, 0] - self.path[min_idx, 0]) ** 2 + (self.path[i, 1] - self.path[min_idx, 1]) ** 2
             if dist >= Ld:
-                #xg, yg, yawg, vg = self.path[i,0], self.path[i,1], self.path[i,2], self.path[i,3]
+                # xg, yg, yawg, vg = self.path[i,0], self.path[i,1], self.path[i,2], self.path[i,3]
                 targetIdx = i
                 break
+        alpha = np.arctan2(self.path[targetIdx, 1] - y, self.path[targetIdx, 0] - x) - np.deg2rad(yaw)
+        w = 2 * v * np.sin(alpha) / Ld
+        next_w = np.rad2deg(w)
+        target = [self.path[targetIdx, 0], self.path[targetIdx, 1]]  #self.path[targetIdx]
 
-        # third, you need to calculate alpha
-        alpha = np.arctan2(y-self.path[targetIdx,1], x-self.path[targetIdx,0]) - np.deg2rad(yaw)
-        # now, you can calculate the ω
-        omega = -2*v*np.sin(alpha)/Ld
         # The next_w is Pure Pursuit Control's output
-        next_w = np.rad2deg(omega)
-        print(next_w)
         # The target is the point on the path which you find
-        target = self.path[targetIdx]
         #####################################################################
         return next_w, target
 
@@ -78,6 +91,7 @@ if __name__ == "__main__":
     # Initialize Car
     car = KinematicModel()
     car.init_state((50,300,0))
+    start = (50,300,0)
     controller = PurePursuitControl()
     controller.set_path(path)
 
@@ -105,7 +119,7 @@ if __name__ == "__main__":
         cv2.imshow("Pure-Pursuit Control Test", img)
         k = cv2.waitKey(1)
         if k == ord('r'):
-            _init_state(car)
+            car.init_state(start)
         if k == 27:
             print()
             break
