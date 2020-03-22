@@ -75,13 +75,12 @@ class KinematicModel:
 
         # todo
         #####################################################################
-
         # You need to calculate basic Kinematic Model state here.(x, y, yaw)
+        # Motion
         self.x += self.v * np.cos(np.deg2rad(self.yaw)) * self.dt
         self.y += self.v * np.sin(np.deg2rad(self.yaw)) * self.dt
         self.yaw += self.w * self.dt
         self.yaw = self.yaw % 360
-
         #####################################################################
 
         self.record.append((self.x, self.y, self.yaw))

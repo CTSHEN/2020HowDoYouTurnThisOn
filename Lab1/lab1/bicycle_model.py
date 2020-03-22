@@ -74,18 +74,28 @@ class KinematicModel:
             self.v = self.v_range
         elif self.v < -self.v_range:
             self.v = -self.v_range
-        
+
         # todo
         #####################################################################
-
         # You need to calculate basic Kinematic Model state here.(x, y, yaw)
-        self.control(self.a,self.delta)
-        self.x += self.v*np.cos(np.deg2rad(self.yaw))*self.dt
-        self.y += self.v*np.sin(np.deg2rad(self.yaw))*self.dt
-        self.yaw += self.v*np.tan(np.deg2rad(self.delta))/self.l
-        
+        # Motion
+        self.x += self.v * np.cos(np.deg2rad(self.yaw)) * self.dt
+        self.y += self.v * np.sin(np.deg2rad(self.yaw)) * self.dt
+        self.yaw += np.rad2deg((self.v * np.tan(np.deg2rad(self.delta))) / self.l) * self.dt
+        self.yaw = self.yaw % 360
         #####################################################################
-
+        """
+        #####################################################################
+        # You need to calculate basic Kinematic Model state here.(x, y, yaw)
+        # Motion
+        self.yaw = np.rad2deg(self.yaw)
+        self.x += self.v * np.cos(np.deg2rad(self.yaw)) * self.dt
+        self.y += self.v * np.sin(np.deg2rad(self.yaw)) * self.dt
+        self.yaw += np.rad2deg((self.v * np.tan(np.deg2rad(self.delta))) / self.l) * self.dt
+        self.yaw = self.yaw % 360
+        self.yaw = np.deg2rad(self.yaw)
+        #####################################################################
+        """
         self.record.append((self.x, self.y, self.yaw))
         self._compute_car_box()
 
