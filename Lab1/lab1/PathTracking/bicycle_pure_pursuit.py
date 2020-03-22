@@ -40,12 +40,66 @@ class PurePursuitControl:
         
         # step by step
         # first, you need to calculate the look ahead distance Ld by formula
+        Ld = self.kp * v + self.Lfc
         # second, you need to find a point(target) on the path which distance between the path and model is as same as the Ld
         ### hint: (you first need to find the nearest point and then find the point(target) backward, this will make your model won't go back)
         ### hint: (if you can not find a point(target) on the path which distance between the path and model is as same as the Ld, you need to find a similar one)
-        # third, you need to calculate alpha
-        # now, you can calculate the delta
+        """
+        target_x = np.arange(0, 600, 1)
+        target_y = [np.sin(ix / 5.0) * ix / 2.0 for ix in target_x]
+        # min_idx, min_dist = self._search_nearest((x, y))
+        #ind = min_idx
+        min_idx, min_dist = self._search_nearest((self.path[min_idx,0], self.path[min_idx,1]))
 
+        #if ind >= min_idx:
+            #min_idx = ind
+        if min_idx < len(target_x):
+            tx = target_x[min_idx]
+            ty = target_y[min_idx]
+        else:
+            tx = target_x[-1]
+            ty = target_y[-1]
+            min_idx = len(target_x) - 1
+        alpha = np.arctan2(ty - y, tx - x) - yaw # np.deg2rad()
+        #if v < 0:  # back
+        #    alpha = np.pi - alpha
+        next_delta = np.arctan2(2.0 * l * np.sin(alpha) / Ld, 1.0)
+        target = min_idx
+        return next_delta, target
+
+
+        i=0
+        if i <= self.path.shape[0]-1:
+            x1 = int(self.path[i,0])
+            y1 = int(self.path[i,1])
+            i += 1
+        min_idx, min_dist = self._search_nearest((x1, y1))
+        if min_dist < Ld:#
+            min_idx, min_dist = self._search_nearest((self.path[min_idx, 0],self.path[min_idx, 1]))
+        # third, you need to calculate alpha
+        alpha = np.arctan2(y - y1, x - x1) - np.deg2rad(yaw)
+        # now, you can calculate the delta
+        #delta = np.arctan((2 * l * np.sin(alpha)) / Ld)
+        #next_delta = delta % 360
+        next_delta = np.arctan2(2.0 * l * np.sin(alpha) / Ld, 1.0)
+        target = min_idx
+        """
+        targetdist= 99999999
+        targetIdx = 0
+        for i in range(min_idx, self.path.shape[0]):
+            #dist = (self.path[i, 0] - self.path[min_idx, 0]) ** 2 + (self.path[i, 1] - self.path[min_idx, 1]) ** 2
+            dist = (x - self.path[i, 0]) ** 2 + (y - self.path[i, 1]) ** 2
+            if (dist - Ld) < targetdist:
+                targetdist = dist
+                targetIdx = i
+        #alpha = np.arctan2(y - self.path[targetIdx, 1], x - self.path[targetIdx, 0]) - np.deg2rad(yaw)
+        alpha = np.arctan2(self.path[targetIdx, 1] - y, self.path[targetIdx, 0] - x) - np.deg2rad(yaw)
+        if v < 0:  # back
+            alpha = np.pi - alpha
+        #next_delta = np.arctan2(2.0 * l * np.sin(alpha) / min_dist, 1.0)#Ld
+        next_delta = np.arctan(2.0 * l * np.sin(alpha) / Ld)
+        next_delta = np.rad2deg(next_delta)
+        target = [self.path[targetIdx, 0], self.path[targetIdx, 1]]
         # The next_delta is Pure Pursuit Control's output
         # The target is the point on the path which you find
         #####################################################################
