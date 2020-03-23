@@ -51,7 +51,7 @@ class RRT():
         # this "if-statement" is not complete, you need complete this "if-statement"
         # you need to check the path is legal or illegal, you can use the function "self._check_collision"
         # illegal
-        if new_node[1]<0 or new_node[1]>=self.map.shape[0] or new_node[0]<0 or new_node[0]>=self.map.shape[1]
+        if new_node[1]<0 or new_node[1]>=self.map.shape[0] or new_node[0]<0 or new_node[0]>=self.map.shape[1] or self._check_collision(from_node,to_node): 
         ####################################################################################################################################################
             return False, None
         # legal
@@ -65,7 +65,7 @@ class RRT():
         self.cost[start] = 0
         goal_node = None
         for it in range(20000):
-            print("\r", it, len(self.ntree), end="")
+            print("\r", it, len(self.ntree))
             samp_node = self._random_node(goal, self.map.shape)
             near_node = self._nearest_node(samp_node)
             new_node, cost = self._steer(near_node, samp_node, extend_lens)
@@ -73,8 +73,8 @@ class RRT():
                 # todo
                 ###################################################################
                 # after creat a new node in a tree, we need to maintain something
-                self.ntree[""" """] = 
-                self.cost[""" """] = 
+                self.ntree[new_node] = near_node 
+                self.cost[new_node] = cost 
                 ###################################################################
             else:
                 continue
