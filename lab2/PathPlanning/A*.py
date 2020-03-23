@@ -34,8 +34,7 @@ class AStar():
                 # todo
                 #####################################################
                 # In a*  we need to add something in this function
-                f = self.g[node]
-                f += self.h[node]
+                f = self.g[node]+ self.h[node]
                 #####################################################
                 if f < min_dist:
                     min_dist = f
