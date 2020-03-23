@@ -75,6 +75,7 @@ class RRT():
                 # after creat a new node in a tree, we need to maintain something
                 self.ntree[new_node] = near_node 
                 self.cost[new_node] = cost 
+                
                 ###################################################################
             else:
                 continue
@@ -145,3 +146,25 @@ if __name__ == "__main__":
     img_ = cv2.flip(img,0)
     cv2.imshow("test",img_)
     k = cv2.waitKey(0)
+
+
+
+
+
+
+
+
+
+###### Python List Testing
+#>>> a ={}
+#>>> a[1]=2
+#>>> a
+#{1: 2}
+#>>> a[2]=3
+#>>> a
+#{1: 2, 2: 3}
+#>>> a["1"]=3
+#>>> a
+#{'1': 3, 1: 2, 2: 3}
+ 
+
