@@ -45,18 +45,19 @@ class StanleyControl:
         theta_e = self.path[target_idx, 2] - yaw
 	# third you need to calculate the v front(vf) and error(e)
         vf = self.path[target_idx, 3]	
-	#e = (target[0]-x)*np.cos(target[2]) + (target[1]-x)*np.sin(target[2])
-        e = math.sqrt(target_dist)
+	e = -(-target[0]+x)*np.sin(target[2])+ (-target[1]+y)*np.cos(target[2])
+
+        #e = math.sqrt(target_dist)
 
         ke = self.kp*e
         # now, you can calculate the delta
-        if v==0 or ke/v >1:
+        if v==0 :
             next_delta = np.rad2deg( theta_e)
             if v!=0:
                 print(ke/v)
         else:
-            next_delta =np.rad2deg(math.asin(-ke/v) + theta_e) 
-
+            next_delta =np.rad2deg(math.atan(-ke/v) )+ np.rad2deg(theta_e) 
+            print(e)
         # The next_delta is Stanley Control's output
         # The target is the point on the path which you find
         ###############################################################################
@@ -70,17 +71,17 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path1()
+    path = path_generator.path2()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
     
     # Initialize Car
     car = KinematicModel()
-    start = (50,300,0)
+    start = (50,260,0)
     car.init_state(start)
     controller = StanleyControl(kp=0.5)
-    controller.set_path(path)
+    controller.set_path(path)	
 
     while(True):
         print("\rState: "+car.state_str()+"\t")
