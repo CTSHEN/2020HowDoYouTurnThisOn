@@ -51,7 +51,7 @@ class RRTStar():
         # this "if-statement" is not complete, you need complete this "if-statement"
         # you need to check the path is legal or illegal, you can use the function "self._check_collision"
         # illegal
-        if new_node[1]<0 or new_node[1]>=self.map.shape[0] or new_node[0]<0 or new_node[0]>=self.map.shape[1]
+        if new_node[1]<0 or new_node[1]>=self.map.shape[0] or new_node[0]<0 or new_node[0]>=self.map.shape[1] or self._check_collision(from_node,to_node): 
         ####################################################################################################################################################
             return False, None
         # legal
@@ -74,7 +74,7 @@ class RRTStar():
         self.cost[start] = 0
         goal_node = None
         for it in range(20000):
-            print("\r", it, len(self.ntree), end="")
+            print("\r", it, len(self.ntree))
             samp_node = self._random_node(goal, self.map.shape)
             near_node = self._nearest_node(samp_node)
             new_node, cost = self._steer(near_node, samp_node, extend_lens)
@@ -82,8 +82,8 @@ class RRTStar():
                 # todo
                 ###################################################################
                 # after creat a new node in a tree, we need to maintain something
-                self.ntree[""" """] = 
-                self.cost[""" """] = 
+                self.ntree[new_node] = near_node 
+                self.cost[new_node] = cost 
                 ###################################################################
             else:
                 continue
@@ -94,24 +94,27 @@ class RRTStar():
             # Re-Parent
             nlist = self._near_node(new_node, 100)
             for n in nlist:
-                cost = self.cost[n] + self._distance(n, new_node)
+                cost = self.cost[n] + self._distance(n, near_node)
                 if cost < self.cost[new_node]:
                     # todo
                     ###################################################################
                     # update the new node's distance
-                    self.ntree[""" """] = 
-                    self.cost[""" """] = 
+                    self.ntree[new_node] = n
+                    self.cost[new_node] = cost
                     ###################################################################
 
             # Re-Wire
             for n in nlist:
+                #if n is not start and n is not self.ntree[new_node] :
                 cost = self.cost[new_node] + self._distance(n, new_node)
-                if cost < self.cost[n]:
+                if cost < self.cost[n] :
                     # todo
+
                     ###################################################################
-                    # update the near node's distance
-                    self.ntree[""" """] = 
-                    self.cost[""" """] = 
+                        # update the near node's distance
+                    self.ntree[n] =  new_node
+                    self.cost[n] = cost
+
                     ###################################################################
 
             # Draw
@@ -142,6 +145,7 @@ class RRTStar():
             path.insert(0,n)
             node = self.ntree[n]
             n = self.ntree[n] 
+
         path.append(goal)
         return path
 
@@ -166,8 +170,8 @@ if __name__ == "__main__":
     cv2.circle(img,(goal[0],goal[1]),5,(0,1,0),3)
 
     rrt = RRTStar(m)
-    path = rrt.planning(start, goal, 30, img)
-    
+    path = rrt.planning(start, goal, 10, img)
+
     # Extract Path
     if not smooth:
         for i in range(len(path)-1):
