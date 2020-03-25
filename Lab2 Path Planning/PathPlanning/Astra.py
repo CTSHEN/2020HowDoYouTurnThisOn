@@ -9,6 +9,7 @@ class AStar():
     def initialize(self):
         self.queue = []
         self.parent = {}
+        self.h = {} # Distance from start to node
         self.g = {} # Distance from node to goal
         self.goal_node = None
 
@@ -17,12 +18,14 @@ class AStar():
         # Diagonal distance h(x)
         d = np.max([np.abs(a[0]-b[0]), np.abs(a[1]-b[1])])
         return d
+
     def planning(self, start=(100,200), goal=(375,520), inter=10, img=None):
         # Initialize 
         self.initialize()
         self.queue.append(start)    # 把起点加入open list。
         self.parent[start] = None
         self.g[start] = 0
+        self.h[start] = self._distance(start, goal)
         node_goal = None
         # 重复如下过程
         while(1):
@@ -30,7 +33,13 @@ class AStar():
             min_id = -1
             # 遍历open list ，查找F值最小的节点，把它作为当前要处理的节点。
             for i, node in enumerate(self.queue):
-                f = self.g[node]
+                # todo
+                #####################################################
+                # In a*  we need to add something in this function
+                # f = self.g[node]
+                self.h[node] = self._distance(node, goal)
+                f = self.g[node] + self.h[node]
+                #####################################################
                 if f < min_dist:
                     min_dist = f
                     min_id = i
@@ -57,11 +66,17 @@ class AStar():
             pts_next = pts_next1 + pts_next2
 
             for pn in pts_next:
-                # 如果它不在 open list 中，把它加入 open list ，并且把当前方格设置为它的父亲，记录该方格的 F ， G 值。
+                # 如果它不在 open list 中，把它加入 open list ，并且把当前方格设置为它的父亲，记录该方格的 F ， G 和 H 值。
                 if pn not in self.parent:
                     self.queue.append(pn)
                     self.parent[pn] = p
                     self.g[pn] = self.g[p] + inter
+                    #todo
+                    #After you find the point, you need to calculate this point's estimation
+                    ##############################################
+                    # update the estimation
+                    self.h[pn] = self._distance(p, goal)
+                    ##############################################
                 # 如果它已经在 open list 中，检查这条路径 ( 即经由当前方格到达它那里 ) 是否更好，用 G 值作参考。更小的
                 # G 值表示这是更好的路径。如果是这样，把它的父亲设置为当前方格，并重新计算它的 G 和 F 值。如果你的
                 # open list 是按 F 值排序的话，改变后你可能需要重新排序。
