@@ -83,7 +83,7 @@ class RRTStar():
                 ###################################################################
                 # after creat a new node in a tree, we need to maintain something
                 self.ntree[new_node] = near_node 
-                self.cost[new_node] = cost 
+                self.cost[new_node] = cost + self.cost[near_node]
                 ###################################################################
             else:
                 continue
@@ -92,29 +92,25 @@ class RRTStar():
                 break
         
             # Re-Parent
-            nlist = self._near_node(new_node, 100)
+            nlist = self._near_node(new_node, 200)
             for n in nlist:
-                cost = self.cost[n] + self._distance(n, near_node)
+                cost = self.cost[n] + self._distance(n, new_node)
                 if cost < self.cost[new_node]:
                     # todo
                     ###################################################################
-                    # update the new node's distance
-                    self.ntree[new_node] = n
-                    self.cost[new_node] = cost
+                    self.ntree[new_node] = n 
+                    self.cost[new_node] = cost 
                     ###################################################################
 
             # Re-Wire
             for n in nlist:
-                #if n is not start and n is not self.ntree[new_node] :
                 cost = self.cost[new_node] + self._distance(n, new_node)
-                if cost < self.cost[n] :
+                if cost < self.cost[n]:
                     # todo
-
                     ###################################################################
-                        # update the near node's distance
-                    self.ntree[n] =  new_node
-                    self.cost[n] = cost
-
+                    # update the near node's distance
+                    self.ntree[new_node] = n 
+                    self.cost[new_node] = cost 
                     ###################################################################
 
             # Draw
@@ -145,7 +141,6 @@ class RRTStar():
             path.insert(0,n)
             node = self.ntree[n]
             n = self.ntree[n] 
-
         path.append(goal)
         return path
 
@@ -170,8 +165,8 @@ if __name__ == "__main__":
     cv2.circle(img,(goal[0],goal[1]),5,(0,1,0),3)
 
     rrt = RRTStar(m)
-    path = rrt.planning(start, goal, 10, img)
-
+    path = rrt.planning(start, goal, 30, img)
+    
     # Extract Path
     if not smooth:
         for i in range(len(path)-1):
