@@ -51,7 +51,7 @@ class RRTStar():
         # this "if-statement" is not complete, you need complete this "if-statement"
         # you need to check the path is legal or illegal, you can use the function "self._check_collision"
         # illegal
-        if new_node[1]<0 or new_node[1]>=self.map.shape[0] or new_node[0]<0 or new_node[0]>=self.map.shape[1]
+        if new_node[1]<0 or new_node[1]>=self.map.shape[0] or new_node[0]<0 or new_node[0]>=self.map.shape[1] or self._check_collision(from_node, new_node):
         ####################################################################################################################################################
             return False, None
         # legal
@@ -80,10 +80,13 @@ class RRTStar():
             new_node, cost = self._steer(near_node, samp_node, extend_lens)
             if new_node is not False:
                 # todo
+                # After you add a node, you need to maintain the tree.
+                # In the first line you need to assign it’s parent.
+                # In the second line you need to calculate the new node’s cost.
                 ###################################################################
                 # after creat a new node in a tree, we need to maintain something
-                self.ntree[""" """] = 
-                self.cost[""" """] = 
+                self.ntree[new_node] = near_node
+                self.cost[new_node] = cost + self.cost[near_node]
                 ###################################################################
             else:
                 continue
@@ -97,10 +100,13 @@ class RRTStar():
                 cost = self.cost[n] + self._distance(n, new_node)
                 if cost < self.cost[new_node]:
                     # todo
+                    # After you add a node, you need to maintain the tree.
+                    # In the first line you need to assign it’s parent.
+                    # In the second line you need to calculate the new node’s cost.
                     ###################################################################
                     # update the new node's distance
-                    self.ntree[""" """] = 
-                    self.cost[""" """] = 
+                    self.ntree[new_node] = n
+                    self.cost[new_node] = cost
                     ###################################################################
 
             # Re-Wire
@@ -108,10 +114,13 @@ class RRTStar():
                 cost = self.cost[new_node] + self._distance(n, new_node)
                 if cost < self.cost[n]:
                     # todo
+                    # After you add a node, you need to maintain the tree.
+                    # In the first line you need to assign it’s parent.
+                    # In the second line you need to calculate the new node’s cost.
                     ###################################################################
                     # update the near node's distance
-                    self.ntree[""" """] = 
-                    self.cost[""" """] = 
+                    self.ntree[new_node] = n
+                    self.cost[new_node] = cost
                     ###################################################################
 
             # Draw
