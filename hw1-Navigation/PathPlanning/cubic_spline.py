@@ -72,9 +72,10 @@ def cubic_spline_2d(path, interval=2):
     x_list, dx_list, ddx_list = cubic_spline(dist_cum,x,interval)
     y_list, dy_list, ddy_list = cubic_spline(dist_cum,y,interval)
     dx, ddx, dy, ddy = np.array(dx_list), np.array(ddx_list), np.array(dy_list), np.array(ddy_list)
-    yaw_list = np.rad2deg(np.arctan2(dy,dx))
+    yaw_list = np.arctan2(dy,dx)
+    ccurv = [50 for ix in x_list]
     curv_list = (ddy * dx - ddx * dy) / ((dx ** 2 + dy ** 2)**(3 / 2))
-    path_smooth = [(x_list[i], y_list[i], yaw_list[i], curv_list[i]) for i in range(len(x_list))]
+    path_smooth = [(x_list[i], y_list[i], yaw_list[i], ccurv[i],curv_list[i]) for i in range(len(x_list))]
     
     #print(path_smooth)
     return path_smooth

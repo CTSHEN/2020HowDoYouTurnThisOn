@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import sys
 import math
-
+PI =3.1415926535897932384626433832795
 def _rot_pos(x,y,phi_):
     phi = phi_
     return np.array((x*np.cos(phi)+y*np.sin(phi), -x*np.sin(phi)+y*np.cos(phi)))
@@ -89,12 +89,20 @@ class KinematicModel:
         self.x=self.x+self.dt*self.v*np.cos(self.yaw)
         self.y=self.y+self.dt*self.v*np.sin(self.yaw)
         self.yaw=self.yaw+self.dt*self.v*np.tan(np.deg2rad(self.delta)/self.l)
-
+        if self.yaw > 2*PI:
+            self.yaw -= 2*PI
         
 
         #####################################################################
 
         self.record.append((self.x, self.y, self.yaw))
+        self._compute_car_box()
+    def redo(self): # For collision simulation
+        self.x -= self.v * np.cos(self.yaw) * self.dt
+        self.y -= self.v * np.sin(self.yaw) * self.dt
+        self.yaw -= (self.v / self.l * np.tan(np.deg2rad(self.delta)) * self.dt) 
+
+        self.record.pop()
         self._compute_car_box()
 
     def control(self,a,delta):

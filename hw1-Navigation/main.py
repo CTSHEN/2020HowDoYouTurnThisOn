@@ -13,6 +13,8 @@ plan_type = 0
 
 # Global Information
 nav_pos = None
+isplan = False
+isppc = False
 init_pos = (100,200,0)
 pos = init_pos
 window_name = "Homework #1 - Navigation"
@@ -36,7 +38,7 @@ car.init_state(init_pos)
 # Path Tracking Controller
 if control_type == 0:
     from PathTracking.bicycle_pure_pursuit import PurePursuitControl
-    controller = PurePursuitControl(kp=0.7,Lfc=10)
+    controller = PurePursuitControl(kp=0.1,Lfc=10)
 elif control_type == 1:
     from PathTracking.bicycle_stanley import StanleyControl
     controller = StanleyControl(kp=0.5)
@@ -56,11 +58,13 @@ from PathPlanning.cubic_spline import *
 ##############################
 # Mouse Click Callback
 def mouse_click(event, x, y, flags, param):
-    global control_type, plan_type, nav_pos, pos,  m_dilate
+    global control_type, plan_type, nav_pos, pos,  m_dilate, isplan, isppc
     if event == cv2.EVENT_LBUTTONUP:
         nav_pos_new = (x, m.shape[0]-y)
         if m_dilate[nav_pos_new[1], nav_pos_new[0]] > 0.5:
             nav_pos = nav_pos_new
+            isplan = True
+            isppc = True
 
 def collision_detect(car, m):
     p1,p2,p3,p4 = car.car_box
@@ -80,9 +84,11 @@ def collision_detect(car, m):
 # Main Function
 ##############################
 def main():
-    global nav_pos, path, init_pos, pos
+    global nav_pos, path, init_pos, pos, isplan, isppc
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, mouse_click)
+    smooth = True  ###TODO### a prameter
+
     # Main Loop
     while(True):
         # Update State
@@ -94,10 +100,35 @@ def main():
         #####################################
         # Control and Path Planning
         #####################################
+        if nav_pos is not None and isplan is True:
+
+                path = None
+                path = planner.planning(start=(int(car.x),int(car.y)), goal=nav_pos, img=img_, inter=20)
+    		isplan = False
+        if nav_pos is not None:
+                # Extract Path
+    		if not smooth:
+        		for i in range(len(path)-1):
+            			cv2.line(img_, path[i], path[i+1], (1,0,0), 2)
+    		else:
+        		path = np.array(cubic_spline_2d(path, interval=1))
+        		for i in range(len(path)-1):
+            			cv2.line(img_, pos_int(path[i]), pos_int(path[i+1]), (1,0,0), 1)
+
+        if nav_pos is not None and isppc is True :   
+            state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v, "l":car.l}
+            controller.set_path(path)
+            next_delta,next_a ,target = controller.feedback(state)
+            car.control(next_a, next_delta)
+            if planner._distance((car.x,car.y),nav_pos)<10.0:
+                isppc = False
+                car.control(0, 0)
+                car.v = 0
+
 
         # Collision Simulation
         if collision_detect(car, m):
-            car.redo()
+            car.redo()()
             car.v = -0.5*car.v
         
         # Environment Rendering
