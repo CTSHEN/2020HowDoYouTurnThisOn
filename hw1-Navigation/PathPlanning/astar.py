@@ -77,11 +77,11 @@ class AStar():
                 cv2.circle(img,(start[0],start[1]),5,(0,1,0),3)
                 cv2.circle(img,(goal[0],goal[1]),5,(0,0,1),3)
                 cv2.circle(img,p,2,(0,0,1),1)
-                #img_ = cv2.flip(img,0)
-                #cv2.imshow("A* Test",img_)
-                #k = cv2.waitKey(1)
-                #if k == 27:
-                  # break
+                img_ = cv2.flip(img,0)
+                cv2.imshow("Homework #1 - Navigation",img_)
+                k = cv2.waitKey(1)
+                if k == 27:
+                   break
         
         # Extract path
         path = []

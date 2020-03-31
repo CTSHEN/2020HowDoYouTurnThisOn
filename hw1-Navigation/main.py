@@ -38,7 +38,7 @@ car.init_state(init_pos)
 # Path Tracking Controller
 if control_type == 0:
     from PathTracking.bicycle_pure_pursuit import PurePursuitControl
-    controller = PurePursuitControl(kp=0.1,Lfc=10)
+    controller = PurePursuitControl(kp=0.1,Lfc=5)
 elif control_type == 1:
     from PathTracking.bicycle_stanley import StanleyControl
     controller = StanleyControl(kp=0.5)
@@ -104,20 +104,31 @@ def main():
 
                 path = None
                 path = planner.planning(start=(int(car.x),int(car.y)), goal=nav_pos, img=img_, inter=20)
+    		if not smooth:
+        		for i in range(len(path)-1):
+            			cv2.line(img_, path[i], path[i+1], (1,0,0), 2)
+    		else:
+        		path_ = np.array(cubic_spline_2d(path, interval=1))
+        		for i in range(len(path_)-1):
+            			cv2.line(img_, pos_int(path_[i]), pos_int(path_[i+1]), (1,0,0), 1)
     		isplan = False
+                img_ = cv2.flip(img_, 0)
+                cv2.imshow(window_name ,img_)
+                cv2.waitKey(2000)
         if nav_pos is not None:
                 # Extract Path
     		if not smooth:
         		for i in range(len(path)-1):
             			cv2.line(img_, path[i], path[i+1], (1,0,0), 2)
     		else:
-        		path = np.array(cubic_spline_2d(path, interval=1))
-        		for i in range(len(path)-1):
-            			cv2.line(img_, pos_int(path[i]), pos_int(path[i+1]), (1,0,0), 1)
+        		path_ = np.array(cubic_spline_2d(path, interval=1))
+        		for i in range(len(path_)-1):
+            			cv2.line(img_, pos_int(path_[i]), pos_int(path_[i+1]), (1,0,0), 1)
+
 
         if nav_pos is not None and isppc is True :   
             state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v, "l":car.l}
-            controller.set_path(path)
+            controller.set_path(path_)
             next_delta,next_a ,target = controller.feedback(state)
             car.control(next_a, next_delta)
             if planner._distance((car.x,car.y),nav_pos)<10.0:
@@ -153,6 +164,14 @@ def main():
             nav_pos = None
             path = None
             print("Reset!!")
+        elif k == ord("p"):  # AStar
+            plan_type = 0
+        elif k == ord("o"): 
+            plan_type = 1    # RRT
+        elif k == ord("l"):  # PP
+            plan_type = 0
+        elif k == ord("k"): 
+            plan_type = 1    # Stanley
         if k == 27:
             print()
             break
