@@ -36,23 +36,24 @@ car.init_state(init_pos)
 
 
 # Path Tracking Controller
-if control_type == 0:
-    from PathTracking.bicycle_pure_pursuit import PurePursuitControl
-    controller = PurePursuitControl(kp=0.1,Lfc=5)
-elif control_type == 1:
-    from PathTracking.bicycle_stanley import StanleyControl
-    controller = StanleyControl(kp=0.5)
-
+#if control_type == 0:
+#    from PathTracking.bicycle_pure_pursuit import PurePursuitControl
+#    controller = PurePursuitControl(kp=0.1,Lfc=5)
+#elif control_type == 1:
+#    from PathTracking.bicycle_stanley import StanleyControl
+#    controller = StanleyControl(kp=0.5)
+from PathTracking.bicycle_pure_pursuit import PurePursuitControl
+from PathTracking.bicycle_stanley import StanleyControl
 # Path Planning Planner
-if plan_type == 0:
-    from PathPlanning.astar import AStar
-    planner = AStar(m_dilate)
-elif plan_type == 1:
-    from PathPlanning.rrt_star import RRTStar
-    planner = RRTStar(m_dilate)
+#if plan_type == 0:
+#    from PathPlanning.astar import AStar
+#    planner = AStar(m_dilate)
+#elif plan_type == 1:
+#    from PathPlanning.rrt_star import RRTStar
+#    planner = RRTStar(m_dilate)
 from PathPlanning.cubic_spline import *
-
-
+from PathPlanning.astar import AStar
+from PathPlanning.rrt_star import RRTStar
 ##############################
 # Util Function
 ##############################
@@ -84,7 +85,7 @@ def collision_detect(car, m):
 # Main Function
 ##############################
 def main():
-    global nav_pos, path, init_pos, pos, isplan, isppc
+    global nav_pos, path, init_pos, pos, isplan, isppc, plan_type,control_type
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, mouse_click)
     smooth = True  ###TODO### a prameter
@@ -95,15 +96,22 @@ def main():
         car.update()
         pos = (car.x, car.y, car.yaw)
         print("\rState: "+car.state_str(), "| Goal:", nav_pos)
+        print("control_type:",control_type,"plan_type:",plan_type)  
         img_ = img.copy()
 
         #####################################
         # Control and Path Planning
         #####################################
+
         if nav_pos is not None and isplan is True:
 
                 path = None
-                path = planner.planning(start=(int(car.x),int(car.y)), goal=nav_pos, img=img_, inter=20)
+                if plan_type == 0:
+                    planner = AStar(m_dilate)
+                    path = planner.planning(start=(int(car.x),int(car.y)), goal=nav_pos, img=img_, inter=20)
+                elif plan_type ==1:
+                    planner = RRTStar(m_dilate)
+                    path = planner.planning((int(car.x),int(car.y)), nav_pos, 30, img_)
     		if not smooth:
         		for i in range(len(path)-1):
             			cv2.line(img_, path[i], path[i+1], (1,0,0), 2)
@@ -114,7 +122,7 @@ def main():
     		isplan = False
                 img_ = cv2.flip(img_, 0)
                 cv2.imshow(window_name ,img_)
-                cv2.waitKey(2000)
+                cv2.waitKey(1500)
         if nav_pos is not None:
                 # Extract Path
     		if not smooth:
@@ -124,17 +132,26 @@ def main():
         		path_ = np.array(cubic_spline_2d(path, interval=1))
         		for i in range(len(path_)-1):
             			cv2.line(img_, pos_int(path_[i]), pos_int(path_[i+1]), (1,0,0), 1)
-
-
+ 
+      
         if nav_pos is not None and isppc is True :   
-            state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v, "l":car.l}
-            controller.set_path(path_)
-            next_delta,next_a ,target = controller.feedback(state)
+            state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta,"v":car.v, "l":car.l,"dt":car.dt}
+            if control_type == 0:
+                controller = PurePursuitControl(kp=0.1,Lfc=5)
+                controller.set_path(path_)
+                next_delta,next_a ,target = controller.feedback(state)
+            elif control_type == 1:
+                controller = StanleyControl(kp=0.5)
+                controller.set_path(path_)
+                next_delta,next_a,target = controller.feedback(state)
+                
             car.control(next_a, next_delta)
-            if planner._distance((car.x,car.y),nav_pos)<10.0:
-                isppc = False
-                car.control(0, 0)
-                car.v = 0
+            if planner._distance((car.x,car.y),nav_pos)<10.0:     
+                car.control(-3, 0)
+                if car.v < 2.0:
+                    car.v = 0
+                    car.control(0, 0)
+                    isppc = False
 
 
         # Collision Simulation
@@ -169,9 +186,9 @@ def main():
         elif k == ord("o"): 
             plan_type = 1    # RRT
         elif k == ord("l"):  # PP
-            plan_type = 0
+            control_type = 0
         elif k == ord("k"): 
-            plan_type = 1    # Stanley
+            control_type = 1    # Stanley
         if k == 27:
             print()
             break

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import sys
 import math
+from utils import *
 
 def _rot_pos(x,y,phi_):
     phi = phi_
@@ -81,10 +82,10 @@ class KinematicModel:
         #####################################################################
 
         # You need to calculate basic Kinematic Model state here.(x, y, yaw)
-	#beta = math.atan(float(self.car_r/(self.car_r+self.car_f))*math.tan( self.delta))
-	#self.x=self.x+self.dt*self.v*np.cos(self.yaw+beta)
-	#self.y=self.y+self.dt*self.v*np.sin(self.yaw+beta)
-	#self.yaw=self.yaw-self.dt*self.v*np.sin(beta/(self.car_r+self.car_f))
+        #beta = math.atan(float(self.car_r/(self.car_r+self.car_f))*math.tan( self.delta))
+        #self.x=self.x+self.dt*self.v*np.cos(self.yaw+beta)
+        #self.y=self.y+self.dt*self.v*np.sin(self.yaw+beta)
+        #self.yaw=self.yaw-self.dt*self.v*np.sin(beta/(self.car_r+self.car_f))
         self.control(self.a,self.delta)
         self.x=self.x+self.dt*self.v*np.cos(self.yaw)
         self.y=self.y+self.dt*self.v*np.sin(self.yaw)

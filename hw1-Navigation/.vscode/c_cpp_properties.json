@@ -1,0 +1,56 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/room5909/duckietown/catkin_ws/devel/include",
+                "/opt/ros/kinetic/include",
+                "/home/room5909/duckietown/catkin_ws/src/05-teleop/adafruit_drivers/include",
+                "/home/room5909/duckietown/catkin_ws/src/10-lane-control/anti_instagram/include",
+                "/home/room5909/duckietown/catkin_ws/src/20-indefinite-navigation/apriltags_ros/apriltags/include",
+                "/home/room5909/duckietown/catkin_ws/src/20-indefinite-navigation/apriltags_ros/apriltags_ros/include",
+                "/home/room5909/duckietown/catkin_ws/src/10-lane-control/complete_image_pipeline/include",
+                "/home/room5909/duckietown/catkin_ws/src/05-teleop/dagu_car/include",
+                "/home/room5909/duckietown/catkin_ws/src/MPC/data_service/include",
+                "/home/room5909/duckietown/catkin_ws/src/70-convenience-packages/duckiebot_visualizer/include",
+                "/home/room5909/duckietown/catkin_ws/src/00-infrastructure/duckieteam/include",
+                "/home/room5909/duckietown/catkin_ws/src/00-infrastructure/duckietown/include",
+                "/home/room5909/duckietown/catkin_ws/src/30-localization-and-planning/duckietown_description/include",
+                "/home/room5909/duckietown/catkin_ws/src/00-infrastructure/easy_algo/include",
+                "/home/room5909/duckietown/catkin_ws/src/00-infrastructure/easy_logs/include",
+                "/home/room5909/duckietown/catkin_ws/src/00-infrastructure/easy_node/include",
+                "/home/room5909/duckietown/catkin_ws/src/00-infrastructure/easy_regression/include",
+                "/home/room5909/duckietown/catkin_ws/src/20-indefinite-navigation/fsm/include",
+                "/home/room5909/duckietown/catkin_ws/src/10-lane-control/ground_projection/include",
+                "/home/room5909/duckietown/catkin_ws/src/ino_car/include",
+                "/home/room5909/duckietown/catkin_ws/src/20-indefinite-navigation/intersection_control/include",
+                "/home/room5909/duckietown/catkin_ws/src/10-lane-control/lane_filter/include",
+                "/home/room5909/duckietown/catkin_ws/src/40-coordination/led_detection/include",
+                "/home/room5909/duckietown/catkin_ws/src/40-coordination/led_interpreter/include",
+                "/home/room5909/duckietown/catkin_ws/src/10-lane-control/line_detector/include",
+                "/home/room5909/duckietown/catkin_ws/src/10-lane-control/line_detector2/include",
+                "/home/room5909/duckietown/catkin_ws/src/30-localization-and-planning/localization/include",
+                "/home/room5909/duckietown/catkin_ws/src/50-misc-additional-functionality/mdoap/include",
+                "/home/room5909/duckietown/catkin_ws/src/20-indefinite-navigation/navigation/include",
+                "/home/room5909/duckietown/catkin_ws/src/05-teleop/pi_camera/include",
+                "/home/room5909/duckietown/catkin_ws/src/60-templates/pkg_name/include",
+                "/home/room5909/duckietown/catkin_ws/src/40-coordination/rgb_led/include",
+                "/home/room5909/duckietown/catkin_ws/src/60-templates/rostest_example/include",
+                "/home/room5909/duckietown/catkin_ws/src/40-coordination/traffic_light/include",
+                "/home/room5909/duckietown/catkin_ws/src/70-convenience-packages/veh_coordinator/include",
+                "/home/room5909/duckietown/catkin_ws/src/50-misc-additional-functionality/vehicle_detection/include",
+                "/home/room5909/duckietown/catkin_ws/src/00-infrastructure/what_the_duck/include",
+                "/usr/include"
+            ],
+            "name": "Linux",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

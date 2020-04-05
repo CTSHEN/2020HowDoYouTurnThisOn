@@ -51,28 +51,28 @@ class PurePursuitControl:
         
         # step by step
         # first, you need to calculate the look ahead distance Ld by formula
-	Ld = self.kp *v + self.Lfc
+        Ld = self.kp *v + self.Lfc
         # second, you need to find a point(target) on the path which distance between the path and model is as same as the Ld
 
         target_idx, target_dist = self._search_target((x,y),Ld,min_idx)
-	target_x = self.path[target_idx,0]	
-	target_y = self.path[target_idx,1]
-  	target_v = self.path[target_idx,3]        
-	'''	
-	tangent = [cos(yaw),sin(yaw)]
-	normal = [sin(yaw), -cos(yaw)]
-	follow_point = closest_point + closest_tangent * lookup_distance
-	'''
+        target_x = self.path[target_idx,0]
+        target_y = self.path[target_idx,1]
+        target_v = self.path[target_idx,3]        
+        '''
+        tangent = [cos(yaw),sin(yaw)]
+        normal = [sin(yaw), -cos(yaw)]
+        follow_point = closest_point + closest_tangent * lookup_distance
+        '''
         ### hint: (you first need to find the nearest point and then find the point(target) backward, this will make your model won't go back)
         ### hint: (if you can not find a point(target) on the path which distance between the path and model is as same as the Ld, you need to find a similar one)
         # third, you need to calculate alpha
-	alpha = np.arctan2((target_y-y),(target_x-x)) - yaw
+        alpha = np.arctan2((target_y-y),(target_x-x)) - yaw
         if alpha > 2*PI:
             alpha -= 2*PI
-        print(alpha, np.arctan2(2*l*np.sin(alpha),target_dist))
-	next_delta = np.rad2deg( math.atan(2*l*np.sin(alpha)/target_dist))
+
+        next_delta = np.rad2deg( math.atan(2*l*np.sin(alpha)/target_dist))
         # now, you can calculate the delta
-	target = self.path[target_idx,:]
+        target = self.path[target_idx,:]
 
         # The next_delta is Pure Pursuit Control's output
         # The target is the point on the path which you find
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path2()
+    path = path_generator.path1()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
