@@ -104,7 +104,7 @@ def main():
         #####################################
 
         if nav_pos is not None and isplan is True:
-
+                car.record = []
                 path = None
                 if plan_type == 0:
                     planner = AStar(m_dilate)
