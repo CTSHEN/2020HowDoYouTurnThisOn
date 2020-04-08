@@ -8,18 +8,18 @@ class StanleyControl:
     def set_path(self, path):
         self.path = path.copy()
     
-    def _search_nearest(self, pos):
+    def _search_nearest(self, pos,l):
         min_dist = 99999999
         min_id = -1
         for i in range(self.path.shape[0]):
-            dist = (pos[0] - self.path[i,0])**2 + (pos[1] - self.path[i,1])**2
+            dist = (pos[0] + l*np.cos(np.deg2rad(state["yaw"])) - self.path[i,0])**2 + (pos[1] + l*np.sin(np.deg2rad(state["yaw"])) - self.path[i,1])**2 # CTSHEN
             if dist < min_dist:
                 min_dist = dist
                 min_id = i
         return min_id, min_dist
 
     # State: [x, y, yaw, delta, v, l]
-    def feedback(self, state):
+    def feedback(self, state, l):
         # Check Path
         if self.path is None:
             print("No path !!")
@@ -36,12 +36,19 @@ class StanleyControl:
 
         # step by step
         # first you need to find the nearest point on the path(centered on the front wheel, previous work all on the back wheel)
+        min_id, min_dist = self._search_nearest((x,y),l)
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
+        theta_e = np.deg2rad(self.path[min_id,2]) - np.deg2rad(yaw)
+        print(theta_e)
         # third you need to calculate the v front(vf) and error(e)
+        vf = v*np.cos(np.deg2rad(delta))
+        e = ((x+l*np.cos(np.deg2rad(yaw))) - self.path[min_id,0])*np.cos(np.deg2rad(self.path[min_id,2])) + ((y+l*np.sin(np.deg2rad(yaw))) - self.path[min_id,1])*np.sin(np.deg2rad(self.path[min_id,2]))
         # now, you can calculate the delta
-
+        delta = np.arctan2(self.kp*e,vf) + theta_e
         # The next_delta is Stanley Control's output
+        next_delta = np.rad2deg(delta)
         # The target is the point on the path which you find
+        target = self.path[min_id]
         ###############################################################################
         return next_delta, target
 
@@ -75,7 +82,7 @@ if __name__ == "__main__":
 
         # Stanley Lateral Control
         state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta, "v":car.v, "l":car.l}
-        next_delta, target = controller.feedback(state)
+        next_delta, target = controller.feedback(state, car.l) # CTSHEN
         car.control(next_a, next_delta)
         
         # Update State & Render
