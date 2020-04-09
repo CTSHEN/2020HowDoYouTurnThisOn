@@ -45,8 +45,10 @@ class StanleyControl:
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
         theta_e = self.path[target_idx, 2] - yaw
         # third you need to calculate the v front(vf) and error(e)
-        target_v = self.path[target_idx, 3]	
-        e = -(-target[0]+x)*np.sin(target[2])+ (-target[1]+y)*np.cos(target[2])
+        target_v = self.path[target_idx, 3]
+        xf =l*np.cos(yaw) + x
+        yf = l*np.sin(yaw) + y
+        e = -(-target[0]+xf)*np.sin(target[2])+ (-target[1]+yf)*np.cos(target[2])
 
 
         ke = self.kp*e
@@ -73,7 +75,7 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path1()
+    path = path_generator.path2()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
