@@ -46,7 +46,9 @@ class StanleyControl:
         theta_e = self.path[target_idx, 2] - yaw
         # third you need to calculate the v front(vf) and error(e)
         target_v = self.path[target_idx, 3]	
-        e = -(-target[0]+x)*np.sin(target[2])+ (-target[1]+y)*np.cos(target[2])
+        xf =l*np.cos(yaw) + x
+        yf = l*np.sin(yaw) + y
+        e = -(-target[0]+xf)*np.sin(target[2])+ (-target[1]+yf)*np.cos(target[2])
 
 
         ke = self.kp*e
