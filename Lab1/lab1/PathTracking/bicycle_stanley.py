@@ -42,9 +42,9 @@ class StanleyControl:
         print(theta_e)
         # third you need to calculate the v front(vf) and error(e)
         vf = v*np.cos(np.deg2rad(delta))
-        e = ((x+l*np.cos(np.deg2rad(yaw))) - self.path[min_id,0])*np.cos(np.deg2rad(self.path[min_id,2])) + ((y+l*np.sin(np.deg2rad(yaw))) - self.path[min_id,1])*np.sin(np.deg2rad(self.path[min_id,2]))
+        e = ((x+l*np.cos(np.deg2rad(yaw))) - self.path[min_id,0])*np.cos(np.pi/2-np.deg2rad(self.path[min_id,2])) + ((y+l*np.sin(np.deg2rad(yaw))) - self.path[min_id,1])*np.sin(np.pi/2-np.deg2rad(self.path[min_id,2]))
         # now, you can calculate the delta
-        delta = np.arctan2(-self.kp*e,vf) + theta_e
+        delta = np.arctan2(-self.kp*e,vf) + theta_e #+ np.pi/2
         # The next_delta is Stanley Control's output
         next_delta = np.rad2deg(delta)
         # The target is the point on the path which you find
