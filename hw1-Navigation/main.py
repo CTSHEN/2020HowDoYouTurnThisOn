@@ -78,29 +78,29 @@ def collision_detect(car, m):
     return collision
 
 #////////////////////////////////////////////////////////////////////////
-def Path_Planning_Planner(plan_type=1):
+def Path_Planning_Planner(image=None, plan_type=1):
     global planner, path, img_path
     smooth = True # False
     start = (np.int(pos[0]), np.int(pos[1]))
-    goal = (np.int(nav_pos[0]),np.int(nav_pos[1]))
+    goal = (np.int(nav_pos[0]),np.int(nav_pos[1]))   #nav_pos   (nav_pos[0], nav_pos[1])
     if plan_type == 0:
         from PathPlanning.Astra import AStar
         planner = AStar(m_dilate)
-        path = planner.planning(start=start, goal=goal, inter=20, img=img)
+        path = planner.planning(start=start, goal=goal, inter=20, img=image)
         print("\rAStar path =")
         print(path)
-        cv2.circle(img, (start[0], start[1]), 5, (0, 0, 1), 3)
-        cv2.circle(img, (goal[0], goal[1]), 5, (0, 1, 0), 3)
+        cv2.circle(image, (start[0], start[1]), 5, (0, 0, 1), 3)
+        cv2.circle(image, (goal[0], goal[1]), 5, (0, 1, 0), 3)
         # Extract Path
         if not smooth:
             for i in range(len(path) - 1):
-                cv2.line(img, path[i], path[i + 1], (1, 0, 0), 1)#2
+                cv2.line(image, path[i], path[i + 1], (1, 0, 0), 2)#2
         else:
             # from cubic_spline import *
             path = np.array(cubic_spline_2d(path, interval=1))
             for i in range(len(path) - 1):
-                cv2.line(img, pos_int(path[i]), pos_int(path[i + 1]), (1, 0, 0), 1)
-        img_path = cv2.flip(img, 0)
+                cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (1, 0, 0), 1)
+        img_ = cv2.flip(image, 0)
         # cv2.imshow("A* Test", img_)
         # k = cv2.waitKey(0)
         print("\rAStar path 1=")
@@ -150,7 +150,7 @@ def Path_Tracking_Controller(image=None, control_type=0):
         #[100, 200, 100, 200], [100, 200, 101, 200], [101, 200, 102, 200], [102, 200, 103, 200],
         #[402, 406, 402, 407]
         end_dist = np.hypot(path[-1, 0] - car.x, path[-1, 1] - car.y)
-        target_v = 40 if end_dist > 265 else 0
+        target_v = 40 if end_dist > 265 else 0  # 40 if end_dist > 265 else 0
         next_a = 0.1 * (target_v - car.v)
 
         # Pure Pursuit Lateral Control
@@ -185,7 +185,7 @@ def Path_Tracking_Controller(image=None, control_type=0):
             # PID Longitude Control
             end_dist = np.hypot(path[-1, 0] - car.x, path[-1, 1] - car.y)
             target_v = 40 if end_dist > 265 else 0
-            next_a = 0.1 * (target_v - car.v)
+            next_a = 0.5 * (target_v - car.v)
 
             # Stanley Lateral Control
             state = {"x": car.x, "y": car.y, "yaw": car.yaw, "delta": car.delta, "v": car.v, "l": car.l}
@@ -212,7 +212,8 @@ def Path_Tracking_Controller(image=None, control_type=0):
 # Main Function
 ##############################
 def main():
-    global nav_pos, path, init_pos, pos, flag
+    global nav_pos, path, init_pos, pos, flag, d
+    temp = []
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, mouse_click)
     flag = 0
@@ -225,20 +226,33 @@ def main():
         img_ = img.copy()
         #////////////////////////////////////////////////////////////////////////
         #mouse_click(event=0, x=100, y=200, flags=0, param=0)
-        if nav_pos is not None and pos != nav_pos:
+        if nav_pos is not None and int(int(pos[0])-nav_pos[0]+int(pos[1])-nav_pos[1])!=0:
             if flag == 0:
                 # Control and Path Planning
                 # Path Planning Planner
                 # 0: Astar / 1: RRT Star
-                Path_Planning_Planner(plan_type = 0)
+                path = None
+                Path_Planning_Planner(image=img, plan_type = 0)
                 flag = 1
             #if nav_pos is not None and pos != nav_pos:
             # Path Tracking Controller
             # 0: Pure_pursuit / 1: Stanley
             # print("\r#################111111")
             Path_Tracking_Controller(image=img, control_type=0)
-        if pos == nav_pos:
-            flag = 0
+            #a=abs(int(car.x) - nav_pos[0])
+            #b=abs(int(car.y) == nav_pos[1])
+            #temp = [int(car.x), int(car.y)]
+    #if nav_pos is not None:
+        #d = np.array((car.x, car.y)) - np.array((nav_pos[0], nav_pos[1]))
+        # np.hypot(d[0], d[1])
+        #if d[0] + d[1] < 1.0:
+        #    flag = 0
+        if nav_pos is not None and (abs(int(car.x)-nav_pos[0])<5 or abs(int(car.y) - nav_pos[1])<5):
+            car.control(-1, 0)
+            if car.v < 2.0:
+                flag = 0
+                car.v = 0
+                car.control(0, 0)
         #////////////////////////////////////////////////////////////////////////
 
         # Collision Simulation
