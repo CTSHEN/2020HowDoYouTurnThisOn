@@ -80,6 +80,22 @@ def cubic_spline_2d(path, interval=2):
     #print(path_smooth)
     return path_smooth
 
+def line_2d(path, interval=2):
+    x = [path[i][0] for i in range(len(path))]
+    y = [path[i][1] for i in range(len(path))]
+    x_diff = [path[i+1][0]-path[i][0] for i in range(len(path)-1)]
+    y_diff = [path[i+1][1]-path[i][1] for i in range(len(path)-1)]
+    m = [y_diff[i]/x_diff[i] for i in range(len(path)-1)]
+    for  i in range(len(path)-1):
+        if x_diff[i] ==0:
+            m[i]=100
+    m.append(0)
+    ccurv = [10 for ix in range(len(path)-1)]
+
+    path_smooth = [(x[i], y[i], np.arctan(m[i]), ccurv[i]) for i in range(len(path)-1)]
+    
+    #print(path_smooth)
+    return path_smooth
 if __name__ == "__main__":
     path = [(20,50), (40,100), (80,120), (160,60)]
     path_smooth = cubic_spline_2d(path)

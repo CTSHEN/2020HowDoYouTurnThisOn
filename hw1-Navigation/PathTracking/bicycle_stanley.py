@@ -53,7 +53,7 @@ class StanleyControl:
 
         ke = self.kp*e
         #now, you can calculate the delta
-        if target_idx >= (self.path.shape[0])-1:
+        if target_idx >= (self.path.shape[0])-1 or v==0:
             next_delta = np.rad2deg( theta_e)
 
         else:
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path1()
+    path = path_generator.path2()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)

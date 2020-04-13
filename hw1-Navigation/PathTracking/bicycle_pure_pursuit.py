@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     # Initialize Car
     car = KinematicModel()
-    start = (50,250,0)
+    start = (50,270,0)
     car.init_state(start)
     controller = PurePursuitControl(kp=0.01, Lfc=10)
     controller.set_path(path)

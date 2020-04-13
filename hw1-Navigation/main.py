@@ -88,7 +88,7 @@ def main():
     global nav_pos, path, init_pos, pos, isplan, isppc, plan_type,control_type
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, mouse_click)
-    smooth = True  ###TODO### a prameter
+    smooth = True ###TODO### 1.a prameter # 2. when false, error
 
     # Main Loop
     while(True):
@@ -106,32 +106,34 @@ def main():
         if nav_pos is not None and isplan is True:
                 car.record = []
                 path = None
+                
                 if plan_type == 0:
                     planner = AStar(m_dilate)
                     path = planner.planning(start=(int(car.x),int(car.y)), goal=nav_pos, img=img_, inter=20)
                 elif plan_type ==1:
                     planner = RRTStar(m_dilate)
                     path = planner.planning((int(car.x),int(car.y)), nav_pos, 30, img_)
-    		if not smooth:
-        		for i in range(len(path)-1):
-            			cv2.line(img_, path[i], path[i+1], (1,0,0), 2)
-    		else:
-        		path_ = np.array(cubic_spline_2d(path, interval=1))
-        		for i in range(len(path_)-1):
-            			cv2.line(img_, pos_int(path_[i]), pos_int(path_[i+1]), (1,0,0), 1)
-    		isplan = False
+                if not smooth:
+                    for i in range(len(path)-1):
+                        cv2.line(img_, pos_int(path[i]), pos_int(path[i+1]), (1,0,0), 2)
+                        path_=np.array(line_2d(path, interval=1))
+                else:
+                    path_ = np.array(cubic_spline_2d(path, interval=1))
+                    for i in range(len(path_)-1):
+                        cv2.line(img_, pos_int(path_[i]), pos_int(path_[i+1]), (1,1,0), 2)
+                isplan = False
                 img_ = cv2.flip(img_, 0)
                 cv2.imshow(window_name ,img_)
-                cv2.waitKey(1500)
+                cv2.waitKey(1000)
         if nav_pos is not None:
                 # Extract Path
-    		if not smooth:
-        		for i in range(len(path)-1):
-            			cv2.line(img_, path[i], path[i+1], (1,0,0), 2)
-    		else:
-        		path_ = np.array(cubic_spline_2d(path, interval=1))
-        		for i in range(len(path_)-1):
-            			cv2.line(img_, pos_int(path_[i]), pos_int(path_[i+1]), (1,0,0), 1)
+            if not smooth:
+                for i in range(len(path)-1):
+                        cv2.line(img_, pos_int(path[i]), pos_int(path[i+1]), (1,0,0), 2)
+            else:
+                path_ = np.array(cubic_spline_2d(path, interval=1))
+                for i in range(len(path_)-1):
+                        cv2.line(img_, pos_int(path_[i]), pos_int(path_[i+1]), (1,1,0), 1)
  
       
         if nav_pos is not None and isppc is True :   
@@ -146,9 +148,9 @@ def main():
                 next_delta,next_a,target = controller.feedback(state)
                 
             car.control(next_a, next_delta)
-            if planner._distance((car.x,car.y),nav_pos)<10.0:     
+            if planner._distance((car.x,car.y),nav_pos)<15.0:     
                 car.control(-3, 0)
-                if car.v < 2.0:
+                if car.v < 3.0:
                     car.v = 0
                     car.control(0, 0)
                     isppc = False
@@ -156,8 +158,23 @@ def main():
 
         # Collision Simulation
         if collision_detect(car, m):
-            car.redo()()
-            car.v = -0.5*car.v
+            print("COllllide")
+            car.redo()         
+            '''
+            if next_delta >= car.delta_range or next_delta <= -car.delta_range:
+                car.control(0,-next_delta)
+                car.v = -1.5*car.v
+                print("~~~~")
+            elif next_delta >0 :
+                next_delta = car.delta_range 
+                car.v = -2
+            elif next_delta <0 :
+                next_delta = -car.delta_range 
+                car.v = -2
+            '''
+                 
+
+            
         
         # Environment Rendering
         if nav_pos is not None:
