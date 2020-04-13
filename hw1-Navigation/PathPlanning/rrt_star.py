@@ -122,7 +122,7 @@ class RRTStar():
                     self.ntree[new_node] = n
                     self.cost[new_node] = cost
                     ###################################################################
-
+            """
             # Draw
             if img is not None:
                 for n in self.ntree:
@@ -141,7 +141,7 @@ class RRTStar():
                 k = cv2.waitKey(1)
                 if k == 27:
                     break
-        
+            """
         # Extract Path
         path = []
         n = goal_node
