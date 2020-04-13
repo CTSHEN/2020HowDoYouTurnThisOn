@@ -110,18 +110,18 @@ def Path_Planning_Planner(image=None, plan_type=1):
         planner = RRTStar(m_dilate)
         path = planner.planning(start, goal, 30, img)
 
-        cv2.circle(img, (start[0], start[1]), 5, (0, 0, 1), 3)
-        cv2.circle(img, (goal[0], goal[1]), 5, (0, 1, 0), 3)
+        cv2.circle(image, (start[0], start[1]), 5, (0, 0, 1), 3)
+        cv2.circle(image, (goal[0], goal[1]), 5, (0, 1, 0), 3)
         # Extract Path
         if not smooth:
             for i in range(len(path) - 1):
-                cv2.line(img, pos_int(path[i]), pos_int(path[i + 1]), (0.5, 0.5, 1), 3)
+                cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (1, 0, 0), 2) #cv2.line(img, pos_int(path[i]), pos_int(path[i + 1]), (0.5, 0.5, 1), 3)
         else:
             # from cubic_spline import *
             path = np.array(cubic_spline_2d(path, interval=4))
             for i in range(len(path) - 1):
-                cv2.line(img, pos_int(path[i]), pos_int(path[i + 1]), (0.5, 0.5, 1), 3)
-        img_path = cv2.flip(img, 0)
+                cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (1, 0, 0), 1) #cv2.line(img, pos_int(path[i]), pos_int(path[i + 1]), (0.5, 0.5, 1), 3)
+        img_ = cv2.flip(image, 0)
         # cv2.imshow("RRT* Test", img_)
         # k = cv2.waitKey(0)
 
@@ -150,8 +150,8 @@ def Path_Tracking_Controller(image=None, control_type=0):
         #[100, 200, 100, 200], [100, 200, 101, 200], [101, 200, 102, 200], [102, 200, 103, 200],
         #[402, 406, 402, 407]
         end_dist = np.hypot(path[-1, 0] - car.x, path[-1, 1] - car.y)
-        target_v = 40 if end_dist > 265 else 0  # 40 if end_dist > 265 else 0
-        next_a = 0.1 * (target_v - car.v)
+        target_v = 20 if end_dist > 30 else 0  # 40 if end_dist > 265 else 0
+        next_a = 1 * (target_v - car.v)
 
         # Pure Pursuit Lateral Control
         state = {"x": car.x, "y": car.y, "yaw": car.yaw, "v": car.v, "l": car.l}
@@ -184,14 +184,14 @@ def Path_Tracking_Controller(image=None, control_type=0):
 
             # PID Longitude Control
             end_dist = np.hypot(path[-1, 0] - car.x, path[-1, 1] - car.y)
-            target_v = 40 if end_dist > 265 else 0
-            next_a = 0.5 * (target_v - car.v)
+            target_v = 20 if end_dist > 30 else 0
+            next_a = 1 * (target_v - car.v)
 
             # Stanley Lateral Control
             state = {"x": car.x, "y": car.y, "yaw": car.yaw, "delta": car.delta, "v": car.v, "l": car.l}
             next_delta, target = controller.feedback(state)
             car.control(next_a, next_delta)
-
+            """
             # Update State & Render
             car.update()
             img_ = image.copy()
@@ -205,7 +205,7 @@ def Path_Tracking_Controller(image=None, control_type=0):
             if k == 27:
                 print()
                 break
-
+            """
 #////////////////////////////////////////////////////////////////////////
 
 ##############################
@@ -232,7 +232,7 @@ def main():
                 # Path Planning Planner
                 # 0: Astar / 1: RRT Star
                 path = None
-                Path_Planning_Planner(image=img, plan_type = 0)
+                Path_Planning_Planner(image=img, plan_type = 1)
                 flag = 1
             #if nav_pos is not None and pos != nav_pos:
             # Path Tracking Controller
@@ -247,8 +247,10 @@ def main():
         # np.hypot(d[0], d[1])
         #if d[0] + d[1] < 1.0:
         #    flag = 0
-        if nav_pos is not None and (abs(int(car.x)-nav_pos[0])<5 or abs(int(car.y) - nav_pos[1])<5):
-            car.control(-1, 0)
+        if nav_pos is not None and (abs(int(car.x)-nav_pos[0])<10 or abs(int(car.y) - nav_pos[1])<10):
+        #d = np.hypot(nav_pos[0] - car.x, nav_pos[1] - car.y)
+        #if nav_pos is not None and (np.hypot(nav_pos[0] - car.x, nav_pos[1] - car.y)) < 10:
+            car.control(-3, 0)
             if car.v < 2.0:
                 flag = 0
                 car.v = 0
