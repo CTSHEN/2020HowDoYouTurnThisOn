@@ -44,6 +44,13 @@ class StanleyControl:
         target = self.path[target_idx, :]
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
         theta_e = self.path[target_idx, 2] - yaw
+        #print (self.path[target_idx, 2], theta_e)
+        if theta_e >np.pi:
+            theta_e = -2*np.pi + theta_e
+             
+        elif theta_e < -np.pi:
+            theta_e =  2*np.pi +theta_e
+
         # third you need to calculate the v front(vf) and error(e)
         target_v = self.path[target_idx, 3]	
         xf =l*np.cos(yaw) + x
@@ -58,7 +65,7 @@ class StanleyControl:
 
         else:
             next_delta =np.rad2deg(math.atan(-ke/v/np.cos(np.deg2rad(delta))) + theta_e) 
-            print( target_idx,e,math.atan(-ke/v))
+            #print( target_idx,e,math.atan(-ke/v))
         self.delta =np.deg2rad( next_delta)
         # The next_delta is Stanley Control's output
         # The target is the point on the path which you find
@@ -75,14 +82,14 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path2()
+    path = path_generator.path1()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
     
     # Initialize Car
     car = KinematicModel()
-    start = (50,260,0)
+    start = (100,260,0)
     car.init_state(start)
     controller = StanleyControl(kp=0.5)
     controller.set_path(path)	
