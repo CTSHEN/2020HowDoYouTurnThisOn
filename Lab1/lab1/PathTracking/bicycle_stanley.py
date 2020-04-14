@@ -12,7 +12,7 @@ class StanleyControl:
         min_dist = 99999999
         min_id = -1
         for i in range(self.path.shape[0]):
-            dist = (pos[0] + l*np.cos(np.deg2rad(state["yaw"])) - self.path[i,0])**2 + (pos[1] + l*np.sin(np.deg2rad(state["yaw"])) - self.path[i,1])**2 # CTSHEN
+            dist = np.sqrt((pos[0] + l*np.cos(np.deg2rad(state["yaw"])) - self.path[i,0])**2 + (pos[1] + l*np.sin(np.deg2rad(state["yaw"])) - self.path[i,1])**2) # CTSHEN
             if dist < min_dist:
                 min_dist = dist
                 min_id = i
@@ -38,11 +38,11 @@ class StanleyControl:
         # first you need to find the nearest point on the path(centered on the front wheel, previous work all on the back wheel)
         min_id, min_dist = self._search_nearest((x,y),l)
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
-        theta_e = np.deg2rad(self.path[min_id,2]) - np.deg2rad(yaw)
+        theta_e = np.deg2rad(yaw) - np.deg2rad(self.path[min_id,2])
         print(theta_e)
         # third you need to calculate the v front(vf) and error(e)
         vf = v*np.cos(np.deg2rad(delta))
-        e = ((x+l*np.cos(np.deg2rad(yaw))) - self.path[min_id,0])*np.cos(np.pi/2-np.deg2rad(self.path[min_id,2])) + ((y+l*np.sin(np.deg2rad(yaw))) - self.path[min_id,1])*np.sin(np.pi/2-np.deg2rad(self.path[min_id,2]))
+        e = ((x+l*np.cos(np.deg2rad(yaw))) - self.path[min_id,0])*np.cos(np.pi/2+np.deg2rad(self.path[min_id,2])) + ((y+l*np.sin(np.deg2rad(yaw))) - self.path[min_id,1])*np.sin(np.pi/2+np.deg2rad(self.path[min_id,2]))
         # now, you can calculate the delta
         delta = np.arctan2(-self.kp*e,vf) + theta_e #+ np.pi/2
         # The next_delta is Stanley Control's output
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path2()
+    path = path_generator.path1()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
