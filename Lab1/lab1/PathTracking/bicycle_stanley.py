@@ -44,6 +44,12 @@ class StanleyControl:
         target = self.path[target_idx, :]
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
         theta_e = self.path[target_idx, 2] - yaw
+        if theta_e >np.pi:
+            theta_e = -2*np.pi + theta_e
+             
+        elif theta_e < -np.pi:
+            theta_e =  2*np.pi +theta_e
+
         # third you need to calculate the v front(vf) and error(e)
         target_v = self.path[target_idx, 3]
         xf =l*np.cos(yaw) + x
