@@ -90,7 +90,10 @@ class KinematicModel:
         self.x=self.x+self.dt*self.v*np.cos(self.yaw)
         self.y=self.y+self.dt*self.v*np.sin(self.yaw)
         self.yaw=self.yaw+self.dt*self.v*np.tan(np.deg2rad(self.delta)/self.l)
-
+        if self.yaw > np.pi :
+            self.yaw -= 2*np.pi
+        elif self.yaw < -np.pi:
+            self.yaw +=2*np.pi
         
 
         #####################################################################

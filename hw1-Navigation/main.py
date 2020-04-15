@@ -131,15 +131,17 @@ def main():
                 for i in range(len(path)-1):
                         cv2.line(img_, pos_int(path[i]), pos_int(path[i+1]), (1,0,0), 2)
             else:
+
                 path_ = np.array(cubic_spline_2d(path, interval=1))
                 for i in range(len(path_)-1):
                         cv2.line(img_, pos_int(path_[i]), pos_int(path_[i+1]), (1,1,0), 1)
+                       
  
       
         if nav_pos is not None and isppc is True :   
             state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta,"v":car.v, "l":car.l,"dt":car.dt}
             if control_type == 0:
-                controller = PurePursuitControl(kp=0.1,Lfc=5)
+                controller = PurePursuitControl(kp=0.1,Lfc=7)
                 controller.set_path(path_)
                 next_delta,next_a ,target = controller.feedback(state)
             elif control_type == 1:
@@ -148,8 +150,8 @@ def main():
                 next_delta,next_a,target = controller.feedback(state)
                 
             car.control(next_a, next_delta)
-            if planner._distance((car.x,car.y),nav_pos)<15.0:     
-                car.control(-3, 0)
+            if planner._distance((car.x,car.y),nav_pos)<20.0:     
+                car.control(-3, next_delta)
                 if car.v < 3.0:
                     car.v = 0
                     car.control(0, 0)
