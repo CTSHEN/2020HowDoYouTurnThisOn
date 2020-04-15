@@ -97,7 +97,7 @@ def Path_Planning_Planner(image=None, plan_type=1):
                 cv2.line(image, path[i], path[i + 1], (1, 0, 0), 2)#2
         else:
             # from cubic_spline import *
-            path = np.array(cubic_spline_2d(path, interval=1))
+            path = np.array(cubic_spline_2d(path, interval=2))
             for i in range(len(path) - 1):
                 cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (1, 0, 0), 1)
         img_ = cv2.flip(image, 0)
@@ -150,8 +150,8 @@ def Path_Tracking_Controller(image=None, control_type=0):
         #[100, 200, 100, 200], [100, 200, 101, 200], [101, 200, 102, 200], [102, 200, 103, 200],
         #[402, 406, 402, 407]
         end_dist = np.hypot(path[-1, 0] - car.x, path[-1, 1] - car.y)
-        target_v = 20 if end_dist > 30 else 0  # 40 if end_dist > 265 else 0
-        next_a = 1 * (target_v - car.v)
+        target_v = 15 if end_dist > 25 else 0  # 40 if end_dist > 265 else 0
+        next_a = 0.5 * (target_v - car.v)
 
         # Pure Pursuit Lateral Control
         state = {"x": car.x, "y": car.y, "yaw": car.yaw, "v": car.v, "l": car.l}
@@ -178,34 +178,36 @@ def Path_Tracking_Controller(image=None, control_type=0):
     elif control_type == 1:
         from PathTracking.bicycle_stanley import StanleyControl
         controller = StanleyControl(kp=0.5)
+        print("\rpath 1=")
+        print(path)
         controller.set_path(path)
-        while (True):
-            print("\rState: " + car.state_str(), end="\t")
+        #while (True):
+        print("\rState: " + car.state_str(), end="\t")
 
-            # PID Longitude Control
-            end_dist = np.hypot(path[-1, 0] - car.x, path[-1, 1] - car.y)
-            target_v = 20 if end_dist > 30 else 0
-            next_a = 1 * (target_v - car.v)
+        # PID Longitude Control
+        end_dist = np.hypot(path[-1, 0] - car.x, path[-1, 1] - car.y)
+        target_v = 25 if end_dist > 38 else 0
+        next_a = 1 * (target_v - car.v)
 
-            # Stanley Lateral Control
-            state = {"x": car.x, "y": car.y, "yaw": car.yaw, "delta": car.delta, "v": car.v, "l": car.l}
-            next_delta, target = controller.feedback(state)
-            car.control(next_a, next_delta)
-            """
-            # Update State & Render
-            car.update()
-            img_ = image.copy()
-            cv2.circle(img_, (int(target[0]), int(target[1])), 3, (1, 0.3, 0.7), 2)  # target points
-            img_ = car.render(img_)
-            img_ = cv2.flip(img_, 0)
-            cv2.imshow("Stanley Control Test", img_)
-            k = cv2.waitKey(1)
-            if k == ord('r'):
-                car.init_state(pos)
-            if k == 27:
-                print()
-                break
-            """
+        # Stanley Lateral Control
+        state = {"x": car.x, "y": car.y, "yaw": car.yaw, "delta": car.delta, "v": car.v, "l": car.l}
+        next_delta, target = controller.feedback(state)
+        car.control(next_a, next_delta)
+        """
+        # Update State & Render
+        car.update()
+        img_ = image.copy()
+        cv2.circle(img_, (int(target[0]), int(target[1])), 3, (1, 0.3, 0.7), 2)  # target points
+        img_ = car.render(img_)
+        img_ = cv2.flip(img_, 0)
+        cv2.imshow("Stanley Control Test", img_)
+        k = cv2.waitKey(1)
+        if k == ord('r'):
+            car.init_state(pos)
+        if k == 27:
+            print()
+            break
+        """
 #////////////////////////////////////////////////////////////////////////
 
 ##############################
@@ -226,7 +228,8 @@ def main():
         img_ = img.copy()
         #////////////////////////////////////////////////////////////////////////
         #mouse_click(event=0, x=100, y=200, flags=0, param=0)
-        if nav_pos is not None and int(int(pos[0])-nav_pos[0]+int(pos[1])-nav_pos[1])!=0:
+        #if nav_pos is not None and int(int(pos[0])-nav_pos[0]+int(pos[1])-nav_pos[1])!=0:car.v == 0
+        if nav_pos is not None and (abs(int(car.x)-nav_pos[0])!= 0 or abs(int(car.y) - nav_pos[1])!= 0):  #
             if flag == 0:
                 # Control and Path Planning
                 # Path Planning Planner
@@ -238,7 +241,7 @@ def main():
             # Path Tracking Controller
             # 0: Pure_pursuit / 1: Stanley
             # print("\r#################111111")
-            Path_Tracking_Controller(image=img, control_type=0)
+            Path_Tracking_Controller(image=img, control_type=1)
             #a=abs(int(car.x) - nav_pos[0])
             #b=abs(int(car.y) == nav_pos[1])
             #temp = [int(car.x), int(car.y)]
@@ -261,7 +264,8 @@ def main():
         if collision_detect(car, m):
             car.redo()
             car.v = -0.5*car.v
-        
+            #car.yaw = car.yaw + 1
+
         # Environment Rendering
         if nav_pos is not None:
             cv2.circle(img_,nav_pos,5,(0.5,0.5,1.0),3)
