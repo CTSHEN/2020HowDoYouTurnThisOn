@@ -16,8 +16,6 @@ nav_pos = None
 init_pos = (100,200,0)
 pos = init_pos
 window_name = "Homework #1 - Navigation"
-planFlag = False
-smooth = True
 
 # Read Image
 img = cv2.flip(cv2.imread("Maps/map.png"),0)
@@ -34,7 +32,7 @@ from bicycle_model import KinematicModel
 car = KinematicModel(l=20, d=5, wu=5, wv=2, car_w=14, car_f=25, car_r=5)
 car.init_state(init_pos)
 
-
+'''
 # Path Tracking Controller
 if control_type == 0:
     from PathTracking.bicycle_pure_pursuit import PurePursuitControl
@@ -45,14 +43,13 @@ elif control_type == 1:
 
 # Path Planning Planner
 if plan_type == 0:
-    #from PathPlanning.astar import AStar
-    from PathPlanning.dijkstra import AStar
+    from PathPlanning.astar import AStar
     planner = AStar(m_dilate)
 elif plan_type == 1:
     from PathPlanning.rrt_star import RRTStar
     planner = RRTStar(m_dilate)
 from PathPlanning.cubic_spline import *
-
+'''
 
 ##############################
 # Util Function
@@ -83,7 +80,7 @@ def collision_detect(car, m):
 # Main Function
 ##############################
 def main():
-    global nav_pos, path, init_pos, pos, planFlag, smooth
+    global nav_pos, path, init_pos, pos
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, mouse_click)
     # Main Loop
@@ -96,19 +93,6 @@ def main():
 
         #####################################
         # Control and Path Planning
-        if nav_pos != None and planFlag == False:
-            path = planner.planning(start=(int(car.x),int(car.y)),goal=nav_pos,inter=20,img=img)
-            print(path)
-            planFlag = True
-
-            # Extract Path
-            if not smooth:
-                for i in range(len(path)-1):
-                    cv2.line(img, path[i], path[i+1], (1,0,0), 2)
-            else:
-                path = np.array(cubic_spline_2d(path, interval=1))
-                for i in range(len(path)-1):
-                    cv2.line(img, pos_int(path[i]), pos_int(path[i+1]), (1,0,0), 1)
         #####################################
 
         # Collision Simulation
