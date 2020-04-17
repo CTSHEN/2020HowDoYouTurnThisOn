@@ -1,7 +1,7 @@
 import numpy as np 
 
 class PidControl:
-    def __init__(self, kp=0.5, ki=0.0001, kd=0.7):
+    def __init__(self, kp=0.4, ki=0.0001, kd=0.5):
         self.path = None
         self.kp = kp
         self.ki = ki
@@ -45,18 +45,23 @@ class PidControl:
 
         # step by step
         # first, you need to calculate the angle(between model and the nearest point(target) on the path), you can use the parameter "self.path" and "min_idx" to get it
+        angle = np.arctan2((self.path[min_idx, 1] - y), self.path[min_idx, 0] - x)
+        
         # second, you need to calculate the error(e(t)) in PID control, you can use the parameter "min_dist" and "angle" to get it
-        # now, you can caculate the P, I and D
-        angle = np.arctan2((self.path[min_idx,1]-y), self.path[min_idx,0]-x)
-        #print(np.sin(angle))
         ep = min_dist * np.sin(angle)
-        #print(ep)
-        self.acc_ep += dt * ep
-        diff_ep = (ep - self.last_ep)/dt
-        next_w = self.kp * ep + self.ki * self.acc_ep + self.kd * diff_ep
+        
+        # now, you can caculate the P, I and D
+        self.acc_ep = self.acc_ep + (ep * dt)
+
+        kp = self.kp * ep
+        ki = self.ki * self.acc_ep
+        kd = self.kd * (ep - self.last_ep) / dt
+
         self.last_ep = ep
 
         # The next_w is PID Control's output
+        next_w = kp + ki + kd
+        
         ############################################################################
         return next_w, self.path[min_idx]
         

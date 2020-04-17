@@ -19,7 +19,6 @@ class PurePursuitControl:
                 min_id = i
         return min_id, min_dist
 
-    # State: [x, y, yaw, v, l]
     def feedback(self, state):
         # Check Path
         if self.path is None:
@@ -27,7 +26,7 @@ class PurePursuitControl:
             return None, None
         
         # Extract State 
-        x, y, yaw, v, l = state["x"], state["y"], state["yaw"], state["v"], state["l"]
+        x, y, yaw, v = state["x"], state["y"], state["yaw"], state["v"]
 
         # Search Front Target
         min_idx, min_dist = self._search_nearest((x,y))
@@ -37,26 +36,43 @@ class PurePursuitControl:
         
         # all parameter name (ex:alpha) comes from the Slides
         # You need to finish the pure pursuit control algo
-        
+
         # step by step
         # first, you need to calculate the look ahead distance Ld by formula
+        kv = self.kp * v
+        Ld = kv + self.Lfc
+
         # second, you need to find a point(target) on the path which distance between the path and model is as same as the Ld
         ### hint: (you first need to find the nearest point and then find the point(target) backward, this will make your model won't go back)
         ### hint: (if you can not find a point(target) on the path which distance between the path and model is as same as the Ld, you need to find a similar one)
+        for i in range(min_idx, self.path.shape[0]):
+            distance = (self.path[i, 0] - self.path[min_idx, 0]) ** 2 + (self.path[i, 1] - self.path[min_idx, 1]) ** 2
+            if distance >= Ld:
+                target_idx = i
+                break
+        
         # third, you need to calculate alpha
-        # now, you can calculate the delta
+        yaw = np.deg2rad(yaw)
+        alpha = np.arctan2(y - self.path[target_idx, 1], x - self.path[target_idx, 0]) - yaw
 
-        # The next_delta is Pure Pursuit Control's output
+        # now, you can calculate the ω
+        w = -(2 * v * np.sin(alpha)) / Ld
+
+        # The next_w is Pure Pursuit Control's output
+        next_w = np.rad2deg(w)
+
         # The target is the point on the path which you find
+        target = self.path[target_idx]
+
         #####################################################################
-        return next_delta, target
+        return next_w, target
 
 if __name__ == "__main__":
     import cv2
     import path_generator
     import sys
     sys.path.append("../")
-    from bicycle_model import KinematicModel
+    from wmr_model import KinematicModel
 
     # Path
     path = path_generator.path2()
@@ -66,13 +82,13 @@ if __name__ == "__main__":
 
     # Initialize Car
     car = KinematicModel()
-    start = (50,300,0)
-    car.init_state(start)
-    controller = PurePursuitControl(kp=1, Lfc=10)
+    car.init_state((50,300,0))
+    controller = PurePursuitControl()
     controller.set_path(path)
 
     while(True):
         print("\rState: "+car.state_str(), end="\t")
+
         # ================= Control Algorithm ================= 
         # PID Longitude Control
         end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
@@ -80,9 +96,9 @@ if __name__ == "__main__":
         next_a = 0.1*(target_v - car.v)
 
         # Pure Pursuit Lateral Control
-        state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v, "l":car.l}
+        state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v}
         next_delta, target = controller.feedback(state)
-        car.control(next_a, next_delta)
+        car.control(next_a,next_delta)
         # =====================================================
         
         # Update & Render
@@ -94,7 +110,7 @@ if __name__ == "__main__":
         cv2.imshow("Pure-Pursuit Control Test", img)
         k = cv2.waitKey(1)
         if k == ord('r'):
-            car.init_state(start)
+            _init_state(car)
         if k == 27:
             print()
             break

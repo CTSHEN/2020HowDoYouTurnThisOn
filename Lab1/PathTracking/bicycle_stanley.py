@@ -27,6 +27,9 @@ class StanleyControl:
         
         # Extract State 
         x, y, yaw, delta, v, l = state["x"], state["y"], state["yaw"], state["delta"], state["v"], state["l"]
+        
+        yaw_rad = np.deg2rad(yaw)
+        delta_rad = np.deg2rad(delta)
 
         # todo
         #############################################################################
@@ -36,12 +39,38 @@ class StanleyControl:
 
         # step by step
         # first you need to find the nearest point on the path(centered on the front wheel, previous work all on the back wheel)
+        xf = x + l * np.cos(yaw_rad)
+        yf = y + l * np.sin(yaw_rad)
+
+        min_idx, _ = self._search_nearest((xf, yf))
+        
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
+        yaw_nearest = self.path[min_idx, 2]
+
+        if yaw < -180:
+            yaw = 360 + yaw
+        elif yaw > 180:
+            yaw = -360 + yaw
+
+        theta_e = yaw_nearest - yaw
+                
         # third you need to calculate the v front(vf) and error(e)
+        vf = v * np.sin(yaw_rad + delta_rad) + v * np.cos(yaw_rad + delta_rad)
+
+        x_nearest = self.path[min_idx, 0]
+        y_nearest = self.path[min_idx, 1]
+
+        e = (xf - x_nearest) * np.cos(np.deg2rad(yaw_nearest + 90)) + (yf - y_nearest) * np.sin(np.deg2rad(yaw_nearest + 90))
+
         # now, you can calculate the delta
+        delta = np.rad2deg(np.arctan2(-e * self.kp, vf)) + theta_e
 
         # The next_delta is Stanley Control's output
+        next_delta = delta
+        
         # The target is the point on the path which you find
+        target = self.path[min_idx]
+        
         ###############################################################################
         return next_delta, target
 

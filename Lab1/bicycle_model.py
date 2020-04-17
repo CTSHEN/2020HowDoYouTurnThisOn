@@ -79,11 +79,13 @@ class KinematicModel:
         #####################################################################
 
         # You need to calculate basic Kinematic Model state here.(x, y, yaw)
-        self.control(self.a,self.delta)
-        self.x += self.v*np.cos(np.deg2rad(self.yaw))*self.dt
-        self.y += self.v*np.sin(np.deg2rad(self.yaw))*self.dt
-        self.yaw += self.v*np.tan(np.deg2rad(self.delta))/self.l
-        
+        yaw = np.deg2rad(self.yaw)
+        delta = np.deg2rad(self.delta)
+
+        self.x += self.v * np.cos(yaw) * self.dt
+        self.y += self.v * np.sin(yaw) * self.dt
+        self.yaw += np.rad2deg(self.v * np.tan(delta) / self.l) * self.dt
+
         #####################################################################
 
         self.record.append((self.x, self.y, self.yaw))
