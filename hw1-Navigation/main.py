@@ -10,7 +10,7 @@ from PathPlanning.cubic_spline import *
 # 0: Pure_pursuit / 1: Stanley
 control_type = 0
 # 0: Astar / 1: RRT Star
-plan_type = 0
+plan_type = 1
 
 # Global Information
 nav_pos = None
@@ -87,24 +87,24 @@ def Path_Planning_Planner(image=None, plan_type=1):
         from PathPlanning.Astra import AStar
         planner = AStar(m_dilate)
         path = planner.planning(start=start, goal=goal, inter=20, img=image)
-        print("\rAStar path =")
-        print(path)
+        #print("\rAStar path =")
+        #print(path)
         cv2.circle(image, (start[0], start[1]), 5, (0, 0, 1), 3)
         cv2.circle(image, (goal[0], goal[1]), 5, (0, 1, 0), 3)
         # Extract Path
         if not smooth:
             for i in range(len(path) - 1):
-                cv2.line(image, path[i], path[i + 1], (1, 0, 0), 2)#2
+                cv2.line(image, path[i], path[i + 1], (0, 255, 0), 2)#2(1, 0, 0)
         else:
             # from cubic_spline import *
             path = np.array(cubic_spline_2d(path, interval=2))
             for i in range(len(path) - 1):
-                cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (1, 0, 0), 1)
+                cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (0, 255, 0), 1)#(1, 0, 0)
         img_ = cv2.flip(image, 0)
         # cv2.imshow("A* Test", img_)
         # k = cv2.waitKey(0)
-        print("\rAStar path 1=")
-        print(path)
+        #print("\rAStar path 1=")
+        #print(path)
     elif plan_type == 1:
         from PathPlanning.rrt_star import RRTStar
         planner = RRTStar(m_dilate)
@@ -115,12 +115,12 @@ def Path_Planning_Planner(image=None, plan_type=1):
         # Extract Path
         if not smooth:
             for i in range(len(path) - 1):
-                cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (1, 0, 0), 2) #cv2.line(img, pos_int(path[i]), pos_int(path[i + 1]), (0.5, 0.5, 1), 3)
+                cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (0, 255, 0), 2) #cv2.line(img, pos_int(path[i]), pos_int(path[i + 1]), (0.5, 0.5, 1), 3)
         else:
             # from cubic_spline import *
             path = np.array(cubic_spline_2d(path, interval=4))
             for i in range(len(path) - 1):
-                cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (1, 0, 0), 1) #cv2.line(img, pos_int(path[i]), pos_int(path[i + 1]), (0.5, 0.5, 1), 3)
+                cv2.line(image, pos_int(path[i]), pos_int(path[i + 1]), (0, 255, 0), 1) #cv2.line(img, pos_int(path[i]), pos_int(path[i + 1]), (0.5, 0.5, 1), 3)
         img_ = cv2.flip(image, 0)
         # cv2.imshow("RRT* Test", img_)
         # k = cv2.waitKey(0)
@@ -133,8 +133,8 @@ def Path_Tracking_Controller(image=None, control_type=0):
     if control_type == 0:
         from PathTracking.bicycle_pure_pursuit import PurePursuitControl
         controller = PurePursuitControl(kp=0.7, Lfc=10)
-        print("\rpath 1=")
-        print(path)
+        #print("\rpath 1=")
+        #print(path)
         #for i in range(path.shape[0] - 1):
         #    cv2.line(img_path, (int(path[i, 0]), int(path[i, 1])), (int(path[i + 1, 0]), int(path[i + 1, 1])),(1.0, 0.5, 0.5), 1)
         #    path_Controller.append([(int(path[i, 0]), int(path[i, 1]), int(path[i + 1, 0]), int(path[i + 1, 1]))])
@@ -177,16 +177,16 @@ def Path_Tracking_Controller(image=None, control_type=0):
         """
     elif control_type == 1:
         from PathTracking.bicycle_stanley import StanleyControl
-        controller = StanleyControl(kp=0.5)
-        print("\rpath 1=")
-        print(path)
+        controller = StanleyControl(kp=0.5)#0.5
+        #print("\rpath 1=")
+        #print(path)
         controller.set_path(path)
         #while (True):
         print("\rState: " + car.state_str(), end="\t")
 
         # PID Longitude Control
         end_dist = np.hypot(path[-1, 0] - car.x, path[-1, 1] - car.y)
-        target_v = 25 if end_dist > 38 else 0
+        target_v = 23 if end_dist > 30 else 0
         next_a = 1 * (target_v - car.v)
 
         # Stanley Lateral Control
@@ -215,7 +215,6 @@ def Path_Tracking_Controller(image=None, control_type=0):
 ##############################
 def main():
     global nav_pos, path, init_pos, pos, flag, d
-    temp = []
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, mouse_click)
     flag = 0
@@ -224,7 +223,16 @@ def main():
         # Update State
         car.update()
         pos = (car.x, car.y, car.yaw)
-        print("\rState: "+car.state_str(), "| Goal:", nav_pos, end="\t")
+        if plan_type ==0:
+            Planning = "Astar"
+        else:
+            Planning = "RRT Star"
+        if control_type == 0:
+            Tracking = "Pure_pursuit"
+        else:
+            Tracking= "Stanley"
+        #print("\rState: " + car.state_str(), "| Goal:", nav_pos, end="\t")
+        print("\rState: "+car.state_str(), "| Goal:", nav_pos, "  Planning: ", Planning, "  Tracking: ",Tracking, end="\t")
         img_ = img.copy()
         #////////////////////////////////////////////////////////////////////////
         #mouse_click(event=0, x=100, y=200, flags=0, param=0)
@@ -235,13 +243,13 @@ def main():
                 # Path Planning Planner
                 # 0: Astar / 1: RRT Star
                 path = None
-                Path_Planning_Planner(image=img, plan_type = 1)
+                Path_Planning_Planner(image=img, plan_type = plan_type)
                 flag = 1
             #if nav_pos is not None and pos != nav_pos:
             # Path Tracking Controller
             # 0: Pure_pursuit / 1: Stanley
             # print("\r#################111111")
-            Path_Tracking_Controller(image=img, control_type=1)
+            Path_Tracking_Controller(image=img, control_type=control_type)
             #a=abs(int(car.x) - nav_pos[0])
             #b=abs(int(car.y) == nav_pos[1])
             #temp = [int(car.x), int(car.y)]
@@ -271,6 +279,8 @@ def main():
             cv2.circle(img_,nav_pos,5,(0.5,0.5,1.0),3)
         img_ = car.render(img_)
         img_ = cv2.flip(img_, 0)
+        #if plan_type == 0:
+        #    window_name = "Homework #1 - Navigation"
         cv2.imshow(window_name ,img_)
 
         # Keyboard 
