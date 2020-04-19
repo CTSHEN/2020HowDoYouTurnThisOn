@@ -6,6 +6,7 @@ class PurePursuitControl:
         self.path = None
         self.kp = kp
         self.Lfc = Lfc
+        self.stop_speed = 0.5
 
     def set_path(self, path):
         self.path = path.copy()
@@ -86,8 +87,126 @@ class PurePursuitControl:
             ds = target_dist
         a = (target_v**2 - v**2)/ds
         return next_delta, a, target
+    def extend_path(self,cx, cy, cyaw):
 
-if __name__ == "__main__":
+        dl = 0.1
+        dl_list = [dl] * (int(self.Lfc / dl) + 1)
+
+        move_direction = math.atan2(cy[-1] - cy[-3], cx[-1] - cx[-3])
+        is_back = abs(move_direction - cyaw[-1]) >= math.pi / 2.0
+
+        for idl in dl_list:
+            if is_back:
+                idl *= -1
+            cx = np.append(cx, cx[-1] + idl * math.cos(cyaw[-1]))
+            cy = np.append(cy, cy[-1] + idl * math.sin(cyaw[-1]))
+            cyaw = np.append(cyaw, cyaw[-1])
+
+        return cx, cy, cyaw
+
+    def set_stop_point(self,target_speed, cx, cy, cyaw):
+        speed_profile = [target_speed] * len(cx)
+        forward = True
+
+        d = []
+
+        # Set stop point
+        for i in range(len(cx) - 1):
+            dx = cx[i + 1] - cx[i]
+            dy = cy[i + 1] - cy[i]
+            d.append(math.sqrt(dx ** 2.0 + dy ** 2.0))
+            iyaw = cyaw[i]
+            move_direction = math.atan2(dy, dx)
+            is_back = abs(move_direction - iyaw) >= math.pi / 2.0
+
+            if dx == 0.0 and dy == 0.0:
+                continue
+
+            if is_back:
+                speed_profile[i] = - target_speed
+            else:
+                speed_profile[i] = target_speed
+
+            if is_back and forward:
+                speed_profile[i] = 0.0
+                forward = False
+                #  plt.plot(cx[i], cy[i], "xb")
+                #  print(iyaw, move_direction, dx, dy)
+            elif not is_back and not forward:
+                speed_profile[i] = 0.0
+                forward = True
+                #  plt.plot(cx[i], cy[i], "xb")
+                #  print(iyaw, move_direction, dx, dy)
+        speed_profile[0] = 0.0
+        if is_back:
+            speed_profile[-1] = -self.stop_speed
+        else:
+            speed_profile[-1] = self.stop_speed
+
+        d.append(d[-1])
+
+        return speed_profile, d
+
+
+    def calc_speed_profile(self,cx, cy, cyaw, target_speed):
+
+        speed_profile, d = self.set_stop_point(target_speed, cx, cy, cyaw)
+        return speed_profile
+    
+    def closed_loop_prediction(self,cx, cy, cyaw, speed_profile, goal,state):
+
+        
+        # Extract State 
+        x, y, yaw, v, l = state["x"], state["y"], state["yaw"], state["v"], state["l"]
+
+
+        t = [0.0]
+        a = [0.0]
+        d = [0.0]
+        
+
+        return t, x, y, yaw, v, a, d#, find_goal
+
+#---------------------------------------------------
+def main2():
+    import pandas as pd
+    import cv2
+    import path_generator
+    import sys
+    sys.path.append("../")
+    from bicycle_model import KinematicModel
+    # Path
+    path = path_generator.path2()
+    img_path = np.ones((600,600,3))
+    for i in range(path.shape[0]-1):
+        cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
+    cx = path[:,0]
+    cy = path[:,1]
+    cyaw = path[:,2]
+    cv = path[:,3]
+    goal = [cx[-1], cy[-1]]
+    target_speed = 10.0 / 3.6
+
+    # Initialize Car
+    car = KinematicModel()
+    start = (50,250,0)
+    car.init_state(start)
+    state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v, "l":car.l}
+    controller = PurePursuitControl(kp=0.01, Lfc=10)
+    controller.set_path(path)
+    #cx, cy, cyaw = controller.extend_path(cx, cy, cyaw)
+    #speed_profile = controller.calc_speed_profile(cx, cy, cyaw, target_speed)
+    t, x, y, yaw, v, a, d = controller.closed_loop_prediction(
+        cx, cy, cyaw, cv, goal,state)
+    img = img_path.copy()
+    for i in range(len(cx)):
+        cv2.circle(img,(int(cx[i]),int(cy[i])),1,(1,0.3,0.7),2) # target points
+    #img = cv2.flip(img, 0)
+    cv2.imshow("Pure-Pursuit Control Test", img)
+    k = cv2.waitKey(0)
+#--------------------------------------------------
+# This is for tracking the path
+def main():
     import cv2
     import path_generator
     import sys
@@ -135,3 +254,7 @@ if __name__ == "__main__":
         if k == 27:
             print()
             break
+
+
+if __name__ == "__main__":
+    main2()
