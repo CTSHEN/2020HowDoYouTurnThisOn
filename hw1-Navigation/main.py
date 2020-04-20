@@ -7,16 +7,19 @@ from utils import *
 ##############################
 # Algorithm Setting
 # 0: Pure_pursuit / 1: Stanley
-control_type = 0
+control_type = 1
 # 0: Astar / 1: RRT Star
 plan_type = 0
 
 # Global Information
 nav_pos = None
+last_nav = None #CTSHEN
 init_pos = (100,200,0)
 pos = init_pos
+path = None
 window_name = "Homework #1 - Navigation"
 planFlag = False
+canControl = False
 smooth = True
 
 # Read Image
@@ -83,7 +86,7 @@ def collision_detect(car, m):
 # Main Function
 ##############################
 def main():
-    global nav_pos, path, init_pos, pos, planFlag, smooth
+    global nav_pos, path, init_pos, pos, planFlag, smooth, last_nav, canControl
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, mouse_click)
     # Main Loop
@@ -96,9 +99,14 @@ def main():
 
         #####################################
         # Control and Path Planning
-        if nav_pos != None and planFlag == False:
-            path = planner.planning(start=(int(car.x),int(car.y)),goal=nav_pos,inter=20,img=img)
-            print(path)
+        ## Planning ##
+        if nav_pos != None and planFlag == False and last_nav != nav_pos:
+            path = planner.planning(start=(int(car.x),int(car.y)),goal=nav_pos,img=img)
+            last_nav = nav_pos
+            canControl = True
+
+
+            #print(path)
             planFlag = True
 
             # Extract Path
@@ -109,6 +117,22 @@ def main():
                 path = np.array(cubic_spline_2d(path, interval=1))
                 for i in range(len(path)-1):
                     cv2.line(img, pos_int(path[i]), pos_int(path[i+1]), (1,0,0), 1)
+
+        planFlag = False
+        ## Control ##
+        if canControl == True:
+            controller.set_path(path)
+            # ================= Control Algorithm ================= 
+            # PID Longitude Control
+            end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
+            target_v = 20 if end_dist > 150 else 0
+            next_a = 0.1*(target_v - car.v)
+
+            # Lateral Control
+            state = {"x":car.x, "y":car.y, "yaw":car.yaw, "v":car.v, "l":car.l, "delta":car.delta}
+            next_delta, target = controller.feedback(state)
+            car.control(next_a, next_delta)
+            # =====================================================
         #####################################
 
         # Collision Simulation

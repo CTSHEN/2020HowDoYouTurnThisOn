@@ -19,7 +19,7 @@ class StanleyControl:
         return min_id, min_dist
 
     # State: [x, y, yaw, delta, v, l]
-    def feedback(self, state, l):
+    def feedback(self, state):
         # Check Path
         if self.path is None:
             print("No path !!")
@@ -38,8 +38,11 @@ class StanleyControl:
         # first you need to find the nearest point on the path(centered on the front wheel, previous work all on the back wheel)
         min_id, min_dist = self._search_nearest((x,y),l)
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
-        theta_e = np.deg2rad(yaw) - np.deg2rad(self.path[min_id,2])
-        print(theta_e)
+        if yaw > 180:
+            yaw = -360+yaw
+                     
+        theta_e = -np.deg2rad(yaw) + np.deg2rad(self.path[min_id,2])
+        print("theta_e = ", theta_e)
         # third you need to calculate the v front(vf) and error(e)
         vf = v*np.cos(np.deg2rad(delta))
         e = ((x+l*np.cos(np.deg2rad(yaw))) - self.path[min_id,0])*np.cos(np.pi/2+np.deg2rad(self.path[min_id,2])) + ((y+l*np.sin(np.deg2rad(yaw))) - self.path[min_id,1])*np.sin(np.pi/2+np.deg2rad(self.path[min_id,2]))
@@ -60,7 +63,7 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path1()
+    path = path_generator.path2()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
@@ -82,7 +85,7 @@ if __name__ == "__main__":
 
         # Stanley Lateral Control
         state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta, "v":car.v, "l":car.l}
-        next_delta, target = controller.feedback(state, car.l) # CTSHEN
+        next_delta, target = controller.feedback(state) # CTSHEN
         car.control(next_a, next_delta)
         
         # Update State & Render

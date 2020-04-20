@@ -46,9 +46,9 @@ class PurePursuitControl:
         ### hint: (if you can not find a point(target) on the path which distance between the path and model is as same as the Ld, you need to find a similar one)
         for i in range(min_idx, self.path.shape[0]):
             dist = np.sqrt((self.path[i,0] - self.path[min_idx,0])**2 + (self.path[i,1] - self.path[min_idx,1])**2)
+            targetIdx = i
             if dist >= Ld:
                 #xg, yg, yawg, vg = self.path[i,0], self.path[i,1], self.path[i,2], self.path[i,3]
-                targetIdx = i
                 break
         # third, you need to calculate alpha
         alpha = np.arctan2(y-self.path[targetIdx,1], x-self.path[targetIdx,0]) - np.deg2rad(yaw)
@@ -67,6 +67,7 @@ if __name__ == "__main__":
     import sys
     sys.path.append("../")
     from bicycle_model import KinematicModel
+
 
     # Path
     path = path_generator.path2()

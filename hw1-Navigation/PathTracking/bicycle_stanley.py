@@ -1,25 +1,25 @@
 import numpy as np 
 
 class StanleyControl:
-    def __init__(self, kp=0.5):
+    def __init__(self, kp=1):
         self.path = None
         self.kp = kp
 
     def set_path(self, path):
         self.path = path.copy()
     
-    def _search_nearest(self, pos,l):
+    def _search_nearest(self, pos,l, yaw):
         min_dist = 99999999
         min_id = -1
         for i in range(self.path.shape[0]):
-            dist = np.sqrt((pos[0] + l*np.cos(np.deg2rad(state["yaw"])) - self.path[i,0])**2 + (pos[1] + l*np.sin(np.deg2rad(state["yaw"])) - self.path[i,1])**2) # CTSHEN
+            dist = np.sqrt((pos[0] + l*np.cos(np.deg2rad(yaw)) - self.path[i,0])**2 + (pos[1] + l*np.sin(np.deg2rad(yaw)) - self.path[i,1])**2) # CTSHEN
             if dist < min_dist:
                 min_dist = dist
                 min_id = i
         return min_id, min_dist
 
     # State: [x, y, yaw, delta, v, l]
-    def feedback(self, state, l):
+    def feedback(self, state):
         # Check Path
         if self.path is None:
             print("No path !!")
@@ -36,10 +36,33 @@ class StanleyControl:
 
         # step by step
         # first you need to find the nearest point on the path(centered on the front wheel, previous work all on the back wheel)
-        min_id, min_dist = self._search_nearest((x,y),l)
+        min_id, min_dist = self._search_nearest((x,y),l,yaw)
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
-        theta_e = np.deg2rad(yaw) - np.deg2rad(self.path[min_id,2])
-        print(theta_e)
+        #if yaw > 180:
+        #    yaw = -360+yaw
+
+        #if self.path[min_id,2]<=90:
+        #    if yaw <= 90: theta_e = self.path[min_id,2] - yaw
+        #    else if yaw >90 and yaw <=180: theta_e = self.path[min_id,2] - yaw
+        #    else if yaw >180 and yaw <=270:
+        #        yaw = -360+yaw
+        #        theta_e = self.path[min_id,2] - yaw
+        #    else if yaw >270 and yaw <360:
+        #        yaw = -360+yaw
+        yaw = np.deg2rad(yaw)
+        path_yaw = np.deg2rad(self.path[min_id,2])
+
+        theta_e = path_yaw - yaw
+        if theta_e > np.pi:
+            theta_e = -2*np.pi + theta_e
+        elif theta_e < -np.pi:
+            theta_e = 2*np.pi + theta_e
+
+
+        #theta_e = -np.deg2rad(yaw) + np.deg2rad(self.path[min_id,2])
+        #theta_e = (self.path[min_id,2] - yaw)
+        #theta_e = np.deg2rad(theta_e)
+        print("theta_e = ", theta_e, "path_yaw",self.path[min_id,2])
         # third you need to calculate the v front(vf) and error(e)
         vf = v*np.cos(np.deg2rad(delta))
         e = ((x+l*np.cos(np.deg2rad(yaw))) - self.path[min_id,0])*np.cos(np.pi/2+np.deg2rad(self.path[min_id,2])) + ((y+l*np.sin(np.deg2rad(yaw))) - self.path[min_id,1])*np.sin(np.pi/2+np.deg2rad(self.path[min_id,2]))
@@ -60,7 +83,7 @@ if __name__ == "__main__":
     from bicycle_model import KinematicModel
 
     # Path
-    path = path_generator.path1()
+    path = path_generator.path2()
     img_path = np.ones((600,600,3))
     for i in range(path.shape[0]-1):
         cv2.line(img_path, (int(path[i,0]), int(path[i,1])), (int(path[i+1,0]), int(path[i+1,1])), (1.0,0.5,0.5), 1)
@@ -82,7 +105,7 @@ if __name__ == "__main__":
 
         # Stanley Lateral Control
         state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta, "v":car.v, "l":car.l}
-        next_delta, target = controller.feedback(state, car.l) # CTSHEN
+        next_delta, target = controller.feedback(state) # CTSHEN
         car.control(next_a, next_delta)
         
         # Update State & Render

@@ -67,7 +67,7 @@ class RRTStar():
                 nlist.append(n)
         return nlist
 
-    def planning(self, start, goal, extend_lens, img=None):
+    def planning(self, start, goal, extend_lens=30, img=None):
         self.ntree = {}
         self.ntree[start] = None
         self.cost = {}
