@@ -212,8 +212,8 @@ def main():
         # Environment Rendering
         if nav_pos is not None:
             cv2.circle(img_,nav_pos,5,(0.5,0.5,1.0),3)
-        if target is not None:
-            cv2.circle(img_,(int(target[0]),int(target[1])),3,(0.5,0.8,1.0),3)
+        #if target is not None:
+        #    cv2.circle(img_,(int(target[0]),int(target[1])),3,(0.5,0.8,1.0),3)
         img_ = car.render(img_)
         img_ = cv2.flip(img_, 0)
         cv2.imshow(window_name ,img_)
