@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from utils import *
 import math
-rho =1
+rho =10
 class RRTStar():
     def __init__(self,m):
         self.map = m
@@ -12,9 +12,11 @@ class RRTStar():
         return np.hypot(d[0], d[1])
 
     def _random_node(self, goal, shape,state,r_):
-        r = np.random.choice(2,1,p=[0.5,0.5])
+        r = np.random.choice(3,1,p=[0.3,0.3,0.4])
+
         if r==1:
             return (float(goal[0]), float(goal[1]))
+    
         else:
             rx = float(np.random.randint(int(shape[1])))
             ry = float(np.random.randint(int(shape[0])))
@@ -44,7 +46,7 @@ class RRTStar():
                 return True
         return False
 
-    def _steer(self, from_node, to_node, extend_len,goal):
+    def _steer(self, from_node, to_node, extend_len,goal,start):
         vect = np.array(to_node[:2]) - np.array(from_node[:2])
         v_len = np.hypot(vect[0], vect[1])
         v_theta = np.arctan2(vect[1], vect[0])
@@ -53,7 +55,7 @@ class RRTStar():
         # at least extend_len
         if extend_len > v_len:
             extend_len = v_len
-        new_node = (from_node[0]+extend_len*np.cos(v_theta), from_node[1]+extend_len*np.sin(v_theta),theta2goal)
+        new_node = (from_node[0]+extend_len*np.cos(v_theta), from_node[1]+extend_len*np.sin(v_theta),v_theta)
         # todo
         ####################################################################################################################################################
         # this "if-statement" is not complete, you need complete this "if-statement"
@@ -62,13 +64,24 @@ class RRTStar():
         if new_node[1]<0 or new_node[1]>=self.map.shape[0] or new_node[0]<0 or new_node[0]>=self.map.shape[1] or self._check_collision(from_node,to_node): 
         ####################################################################################################################################################
             return False, None
+        elif from_node is start and np.fabs(np.cos(start[2])*vect[0]+np.sin(start[2])*vect[1])/v_len>0.5:
+            
+            p1 = (new_node[0]- from_node[0])*np.cos(from_node[2]) + (new_node[1]- from_node[1])*np.sin(from_node[2])
+            p2 = (new_node[1]- from_node[1])*np.sin(from_node[2]) - (new_node[0]- from_node[0])*np.sin(from_node[2])
+            dc = (p1)**2+ (math.fabs(p2) -rho)**2
+            dis = np.sqrt(dc -rho**2) + rho*(np.arctan2(p1,rho-math.fabs(p2))- np.arccos(rho/np.sqrt(dc)))
+            if dis > 0.1:
+                print(dis)
+                return False, None
+            else: 
+                return new_node, self._distance(new_node, from_node)
         # legal
         else:
             p1 = (new_node[0]- from_node[0])*np.cos(from_node[2]) + (new_node[1]- from_node[1])*np.sin(from_node[2])
             p2 = (new_node[1]- from_node[1])*np.sin(from_node[2]) - (new_node[0]- from_node[0])*np.sin(from_node[2])
             dc = (p1)**2+ (math.fabs(p2) -rho)**2
             dis = np.sqrt(dc -rho**2) + rho*(np.arctan2(p1,rho-math.fabs(p2))- np.arccos(rho/np.sqrt(dc)))     
-            return new_node, dis #self._distance(new_node, from_node)
+            return new_node,  self._distance(new_node, from_node)
     
     def _near_node(self, node, radius):
         nlist = []
@@ -86,11 +99,12 @@ class RRTStar():
         self.cost[start] = 0
         goal_node = None
         for it in range(20000):
-            print("\r", it, len(self.ntree))
+            #print("\r", it, len(self.ntree))
             samp_node = self._random_node(goal, self.map.shape,start,30)
             near_node = self._nearest_node(samp_node)
 
-            new_node, cost = self._steer(near_node, samp_node, extend_lens,goal)
+            cv2.waitKey(10)
+            new_node, cost = self._steer(near_node, samp_node, extend_lens,goal,start)
             if new_node is not False:
                 # todo
                 ###################################################################
@@ -105,12 +119,16 @@ class RRTStar():
                 break
         
             # Re-Parent
-            nlist = self._near_node(new_node, 100)
+            nlist = self._near_node(new_node, 200)
             for n in nlist:
             	p1 = (new_node[0]- n[0])*np.cos(n[2])
             	p2 = (new_node[1]- n[1])*np.sin(n[2])
+                p1 = (new_node[0]- n[0])*np.cos(n[2]) + (new_node[1]- n[1])*np.sin(n[2])
+                p2 = (new_node[1]- n[1])*np.sin(n[2]) - (new_node[0]- n[0])*np.sin(n[2])
             	dc = (p1)**2+ (math.fabs(p2) -rho)**2
-            	dis = np.sqrt(dc -rho**2) + rho*(np.arctan2(p1,rho-math.fabs(p2))- np.arccos(rho/np.sqrt(dc)))    
+            	dis = np.sqrt(dc -rho**2) + rho*(np.arctan2(p1,rho-math.fabs(p2))- np.arccos(rho/np.sqrt(dc))) 
+                if n is start and dis > 0.2 :
+                    continue   
                 cost = self.cost[n] + self._distance(n, new_node)
                 if cost < self.cost[new_node]:
                     # todo
@@ -121,15 +139,22 @@ class RRTStar():
 
             # Re-Wire
             for n in nlist:
-   
-                cost = self.cost[new_node] + self._distance(n, new_node)
+            	p1 = (n[0]- new_node[0])*np.cos(new_node[2])
+            	p2 = (n[1]- new_node[1])*np.sin(new_node[2])
+                p1 = (n[0]- new_node[0])*np.cos(new_node[2]) + (n[1]- new_node[1])*np.sin(new_node[2])
+                p2 = (n[1]- new_node[1])*np.sin(new_node[2]) - (n[0]- new_node[0])*np.sin(new_node[2])
+            	dc = (p1)**2+ (math.fabs(p2) -rho)**2
+            	dis = np.sqrt(dc -rho**2) + rho*(np.arctan2(p1,rho-math.fabs(p2))- np.arccos(rho/np.sqrt(dc)))  
+                if n is start and dis > 0.2 :
+                    continue 
+                cost = self.cost[new_node] +self._distance(n, new_node)
                 if cost < self.cost[n]:
                     # todo
                     ###################################################################
                     # update the near node's distance
                     self.ntree[new_node] = n 
                     self.cost[new_node] = cost 
-                    ###################################################################
+                   ###################################################################
 
             # Draw
             if img is not None:
@@ -168,7 +193,7 @@ def pos_int(p):
 smooth = True
 if __name__ == "__main__":
     # Config
-    img = cv2.flip(cv2.imread("../Maps/map2.png"),0)
+    img = cv2.flip(cv2.imread("../Maps/map.png"),0)
     img[img>128] = 255
     img[img<=128] = 0
     m = np.asarray(img)
@@ -177,13 +202,13 @@ if __name__ == "__main__":
     m = 1-cv2.dilate(1-m, np.ones((20,20)))
     img = img.astype(float)/255.
 
-    start=(100,200,0)
+    start=(100,200,-0.5)
     goal=(380,520,0)
     cv2.circle(img,(start[0],start[1]),5,(0,0,1),3)
     cv2.circle(img,(goal[0],goal[1]),5,(0,1,0),3)
 
     rrt = RRTStar(m)
-    path = rrt.planning(start, goal, 30, img)
+    path = rrt.planning(start, goal, 40, img)
     
     # Extract Path
     if not smooth:
