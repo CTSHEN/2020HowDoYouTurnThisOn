@@ -38,17 +38,7 @@ class StanleyControl:
         # first you need to find the nearest point on the path(centered on the front wheel, previous work all on the back wheel)
         min_id, min_dist = self._search_nearest((x,y),l,yaw)
         # second you need to calculate the theta_e by use the "nearest point's yaw" and "model's yaw"
-        #if yaw > 180:
-        #    yaw = -360+yaw
-
-        #if self.path[min_id,2]<=90:
-        #    if yaw <= 90: theta_e = self.path[min_id,2] - yaw
-        #    else if yaw >90 and yaw <=180: theta_e = self.path[min_id,2] - yaw
-        #    else if yaw >180 and yaw <=270:
-        #        yaw = -360+yaw
-        #        theta_e = self.path[min_id,2] - yaw
-        #    else if yaw >270 and yaw <360:
-        #        yaw = -360+yaw
+        
         yaw = np.deg2rad(yaw)
         path_yaw = np.deg2rad(self.path[min_id,2])
 
@@ -59,10 +49,7 @@ class StanleyControl:
             theta_e = 2*np.pi + theta_e
 
 
-        #theta_e = -np.deg2rad(yaw) + np.deg2rad(self.path[min_id,2])
-        #theta_e = (self.path[min_id,2] - yaw)
-        #theta_e = np.deg2rad(theta_e)
-        print("theta_e = ", theta_e, "path_yaw",self.path[min_id,2])
+        
         # third you need to calculate the v front(vf) and error(e)
         vf = v*np.cos(np.deg2rad(delta))
         e = ((x+l*np.cos(np.deg2rad(yaw))) - self.path[min_id,0])*np.cos(np.pi/2+np.deg2rad(self.path[min_id,2])) + ((y+l*np.sin(np.deg2rad(yaw))) - self.path[min_id,1])*np.sin(np.pi/2+np.deg2rad(self.path[min_id,2]))

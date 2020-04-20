@@ -115,23 +115,23 @@ class RRTStar():
                     ###################################################################
 
             # Draw
-            if img is not None:
-                for n in self.ntree:
-                    if self.ntree[n] is None:
-                        continue
-                    node = self.ntree[n]
-                    cv2.line(img, (int(n[0]), int(n[1])), (int(node[0]), int(node[1])), (1,0,0), 1)
+            #if img is not None:
+            #    for n in self.ntree:
+            #        if self.ntree[n] is None:
+            #            continue
+            #        node = self.ntree[n]
+            #        cv2.line(img, (int(n[0]), int(n[1])), (int(node[0]), int(node[1])), (1,0,0), 1)
                 # Near Node
-                img_ = img.copy()
-                cv2.circle(img_,pos_int(new_node),5,(0,0.5,1),3)
-                for n in nlist:
-                    cv2.circle(img_,pos_int(n),3,(0,0.7,1),2)
+            #    img_ = img.copy()
+            #    cv2.circle(img_,pos_int(new_node),5,(0,0.5,1),3)
+            #    for n in nlist:
+            #        cv2.circle(img_,pos_int(n),3,(0,0.7,1),2)
                 # Draw Image
-                img_ = cv2.flip(img_,0)
-                cv2.imshow("RRT* Test",img_)
-                k = cv2.waitKey(1)
-                if k == 27:
-                    break
+            #    img_ = cv2.flip(img_,0)
+            #    cv2.imshow("RRT* Test",img_)
+            #    k = cv2.waitKey(1)
+            #    if k == 27:
+            #        break
         
         # Extract Path
         path = []

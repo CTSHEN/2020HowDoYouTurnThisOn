@@ -1,16 +1,17 @@
 import cv2
 import numpy as np
 from utils import *
+import sys, getopt
 
 ##############################
 # Preset
 ##############################
 # Algorithm Setting
 # 0: Pure_pursuit / 1: Stanley
-control_type = 1
+#control_type = 1
 # 0: Astar / 1: RRT Star
-plan_type = 0
-
+#plan_type = 0
+from PathPlanning.cubic_spline import *
 # Global Information
 nav_pos = None
 last_nav = None #CTSHEN
@@ -38,23 +39,7 @@ car = KinematicModel(l=20, d=5, wu=5, wv=2, car_w=14, car_f=25, car_r=5)
 car.init_state(init_pos)
 
 
-# Path Tracking Controller
-if control_type == 0:
-    from PathTracking.bicycle_pure_pursuit import PurePursuitControl
-    controller = PurePursuitControl(kp=0.7,Lfc=10)
-elif control_type == 1:
-    from PathTracking.bicycle_stanley import StanleyControl
-    controller = StanleyControl(kp=0.5)
 
-# Path Planning Planner
-if plan_type == 0:
-    #from PathPlanning.astar import AStar
-    from PathPlanning.dijkstra import AStar
-    planner = AStar(m_dilate)
-elif plan_type == 1:
-    from PathPlanning.rrt_star import RRTStar
-    planner = RRTStar(m_dilate)
-from PathPlanning.cubic_spline import *
 
 
 ##############################
@@ -85,7 +70,43 @@ def collision_detect(car, m):
 ##############################
 # Main Function
 ##############################
-def main():
+def main(argv):
+
+    try:
+        opts, args = getopt.getopt(argv,"hp:c:",["Planning=","Control="])
+    except getopt.GetoptError:
+        print('<ERROR> main.py -p <PlanningMethod 0:AStar 1:RRTStar> -c <ControlMethod 0:PurePersuit 1:Stanley>')
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt == '-h':
+            print('main.py -p <PlanningMethod 0:AStar 1:RRTStar> -c <ControlMethod 0:PurePersuit 1:Stanley>')
+            sys.exit()
+        elif opt in ("-p", "--Planning"):
+            plan_type = arg
+        elif opt in ("-c", "--Control"):
+            control_type = arg
+
+    # Path Tracking Controller
+    if control_type == '0':
+        from PathTracking.bicycle_pure_pursuit import PurePursuitControl
+        controller = PurePursuitControl(kp=0.7,Lfc=10)
+    elif control_type == '1':
+        from PathTracking.bicycle_stanley import StanleyControl
+        controller = StanleyControl(kp=0.75)
+    else:
+        print('ERROR')
+        sys.exit(2)
+
+    # Path Planning Planner
+    if plan_type == '0':
+        from PathPlanning.dijkstra import AStar
+        planner = AStar(m_dilate)
+    elif plan_type == '1':
+        from PathPlanning.rrt_star import RRTStar
+        planner = RRTStar(m_dilate)
+    #from PathPlanning.cubic_spline import *
+
     global nav_pos, path, init_pos, pos, planFlag, smooth, last_nav, canControl
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, mouse_click)
@@ -106,9 +127,10 @@ def main():
             canControl = True
 
 
-            #print(path)
-            planFlag = True
+            img_ = img.copy()
+            cv2.imshow(window_name,img_)     
 
+            planFlag = True
             # Extract Path
             if not smooth:
                 for i in range(len(path)-1):
@@ -118,14 +140,14 @@ def main():
                 for i in range(len(path)-1):
                     cv2.line(img, pos_int(path[i]), pos_int(path[i+1]), (1,0,0), 1)
 
-        planFlag = False
+        
         ## Control ##
         if canControl == True:
             controller.set_path(path)
             # ================= Control Algorithm ================= 
             # PID Longitude Control
             end_dist = np.hypot(path[-1,0]-car.x, path[-1,1]-car.y)
-            target_v = 20 if end_dist > 150 else 0
+            target_v = 20 if end_dist > 180 else 0
             next_a = 0.1*(target_v - car.v)
 
             # Lateral Control
@@ -147,6 +169,10 @@ def main():
         img_ = cv2.flip(img_, 0)
         cv2.imshow(window_name ,img_)
 
+        # Remove Path
+        Path = None
+        planFlag = False
+
         # Keyboard 
         k = cv2.waitKey(1)
         if k == ord("a"):
@@ -167,4 +193,4 @@ def main():
             break
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
