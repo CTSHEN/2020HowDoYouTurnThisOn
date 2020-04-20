@@ -6,7 +6,7 @@ class PurePursuitControl:
         self.path = None
         self.kp = kp
         self.Lfc = Lfc
-
+        self.last_target_idx = 0
     def set_path(self, path):
         self.path = path.copy()
 
@@ -20,16 +20,18 @@ class PurePursuitControl:
                 min_id = i
         return min_id, np.sqrt( min_dist)
 
-    def _search_target(self, pos,Ld,ind_near):
+    def _search_target(self, pos,Ld,ind_min, ind_last):
         min_dist = 99999999
         min_id = -1
-	
-        for i in range(ind_near,self.path.shape[0]):
-            dist = (pos[0] - self.path[i,0])**2 + (pos[1] - self.path[i,1])**2
-            if (dist -Ld**2) < min_dist:
+        ind_near = max(ind_min, ind_last)
+        
+        for i in range(ind_min,self.path.shape[0]):
+            dist = np.sqrt((pos[0] - self.path[i,0])**2 + (pos[1] - self.path[i,1])**2)
+            if dist  > Ld:
                 min_dist = dist
                 min_id = i
-        return min_id, np.sqrt(min_dist)
+                break
+        return min_id, min_dist
     # State: [x, y, yaw, v, l]
     def feedback(self, state):
         # Check Path
@@ -54,10 +56,13 @@ class PurePursuitControl:
         Ld = self.kp *v + self.Lfc
         # second, you need to find a point(target) on the path which distance between the path and model is as same as the Ld
 
-        target_idx, target_dist = self._search_target((x,y),Ld,min_idx)
+        target_idx, target_dist = self._search_target((x,y),Ld,min_idx,self.last_target_idx+1)
         target_x = self.path[target_idx,0]
         target_y = self.path[target_idx,1]
-        target_v = self.path[target_idx,3]        
+        target_v = self.path[target_idx,3]  
+          
+        self.last_target_idx = target_idx
+ 
         '''
         tangent = [cos(yaw),sin(yaw)]
         normal = [sin(yaw), -cos(yaw)]
@@ -67,10 +72,13 @@ class PurePursuitControl:
         ### hint: (if you can not find a point(target) on the path which distance between the path and model is as same as the Ld, you need to find a similar one)
         # third, you need to calculate alpha
         alpha = np.arctan2((target_y-y),(target_x-x)) - yaw
-        if alpha > 2*PI:
+        if alpha > PI:
             alpha -= 2*PI
+        elif alpha < -PI:
+            alpha += 2*PI
+        
 
-        next_delta = np.rad2deg( math.atan(2*l*np.sin(alpha)/target_dist))
+        next_delta = np.rad2deg( np.arctan2(2*l*np.sin(alpha),target_dist))
         # now, you can calculate the delta
         target = self.path[target_idx,:]
 

@@ -14,7 +14,9 @@ plan_type = 0
 # Global Information
 nav_pos = None
 isplan = False
-isppc = False
+isdone = False
+iscollide = False
+isSetCt = False
 init_pos = (100,200,0)
 pos = init_pos
 window_name = "Homework #1 - Navigation"
@@ -59,13 +61,13 @@ from PathPlanning.rrt_star import RRTStar
 ##############################
 # Mouse Click Callback
 def mouse_click(event, x, y, flags, param):
-    global control_type, plan_type, nav_pos, pos,  m_dilate, isplan, isppc
+    global control_type, plan_type, nav_pos, pos,  m_dilate, isplan, isdone
     if event == cv2.EVENT_LBUTTONUP:
         nav_pos_new = (x, m.shape[0]-y)
         if m_dilate[nav_pos_new[1], nav_pos_new[0]] > 0.5:
             nav_pos = nav_pos_new
             isplan = True
-            isppc = True
+            isdone = True
 
 def collision_detect(car, m):
     p1,p2,p3,p4 = car.car_box
@@ -85,11 +87,12 @@ def collision_detect(car, m):
 # Main Function
 ##############################
 def main():
-    global nav_pos, path, init_pos, pos, isplan, isppc, plan_type,control_type
+    global nav_pos, path, init_pos, pos, isplan, isdone, isSetCt, iscollide, plan_type,control_type
     cv2.namedWindow(window_name)
     cv2.setMouseCallback(window_name, mouse_click)
     smooth = True ###TODO### 1.a prameter # 2. when false, error
-
+    collide_i = 0
+    target = None
     # Main Loop
     while(True):
         # Update State
@@ -138,30 +141,58 @@ def main():
                        
  
       
-        if nav_pos is not None and isppc is True :   
+        if nav_pos is not None and isdone is True and iscollide is False and isSetCt is False :   
             state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta,"v":car.v, "l":car.l,"dt":car.dt}
             if control_type == 0:
-                controller = PurePursuitControl(kp=0.1,Lfc=7)
+                controller = PurePursuitControl(kp=1,Lfc=10)
                 controller.set_path(path_)
                 next_delta,next_a ,target = controller.feedback(state)
+                
             elif control_type == 1:
                 controller = StanleyControl(kp=0.5)
                 controller.set_path(path_)
                 next_delta,next_a,target = controller.feedback(state)
                 
             car.control(next_a, next_delta)
-            if planner._distance((car.x,car.y),nav_pos)<20.0:     
+            if planner._distance((car.x,car.y),nav_pos)<30.0:     
                 car.control(-3, next_delta)
                 if car.v < 3.0:
                     car.v = 0
                     car.control(0, 0)
-                    isppc = False
-
-
+                    isdone = False
+            isSetCt = True
+        elif nav_pos is not None and isdone is True and iscollide is False and isSetCt is True:   
+            state = {"x":car.x, "y":car.y, "yaw":car.yaw, "delta":car.delta,"v":car.v, "l":car.l,"dt":car.dt}
+            if control_type == 0:
+                controller.set_path(path_)
+                next_delta,next_a ,target = controller.feedback(state)
+                
+            elif control_type == 1:
+                controller.set_path(path_)
+                next_delta,next_a,target = controller.feedback(state)
+                
+            car.control(next_a, next_delta)
+            if planner._distance((car.x,car.y),nav_pos)<30.0:     
+                car.control(-3, next_delta)
+                if car.v < 3.0:
+                    car.v = 0
+                    car.control(0, 0)
+                    isdone = False
+                    isSetCt = False        
+        elif nav_pos is not None and isdone is True and iscollide is True: 
+            car.control(0, 0)
+            car.v = -5
+            collide_i += 1
+            if collide_i > 100:
+                iscollide = False
+                collide_i = 0
+                  
         # Collision Simulation
         if collision_detect(car, m):
             print("COllllide")
-            car.redo()         
+            #car.redo()
+            iscollide = True
+              
             '''
             if next_delta >= car.delta_range or next_delta <= -car.delta_range:
                 car.control(0,-next_delta)
@@ -181,6 +212,8 @@ def main():
         # Environment Rendering
         if nav_pos is not None:
             cv2.circle(img_,nav_pos,5,(0.5,0.5,1.0),3)
+        if target is not None:
+            cv2.circle(img_,(int(target[0]),int(target[1])),3,(0.5,0.8,1.0),3)
         img_ = car.render(img_)
         img_ = cv2.flip(img_, 0)
         cv2.imshow(window_name ,img_)

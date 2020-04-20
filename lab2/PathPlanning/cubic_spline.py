@@ -76,7 +76,7 @@ def cubic_spline_2d(path, interval=2):
     curv_list = (ddy * dx - ddx * dy) / ((dx ** 2 + dy ** 2)**(3 / 2))
     path_smooth = [(x_list[i], y_list[i], yaw_list[i], curv_list[i]) for i in range(len(x_list))]
     
-    print(path_smooth)
+    #print(path_smooth)
     return path_smooth
 
 if __name__ == "__main__":

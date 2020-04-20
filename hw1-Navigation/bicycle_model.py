@@ -22,7 +22,7 @@ def _draw_rectangle(img,x,y,u,v,phi,color=(0,0,0),size=1):
 class KinematicModel:
     def __init__(self,
             v_range = 50.0,
-            a_range = 5.0,
+            a_range = 6.0,
             delta_range = 45.0,
             l = 40.0,     # distance between rear and front wheel
             d = 10.0,     # Wheel Distance
