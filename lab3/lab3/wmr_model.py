@@ -147,7 +147,7 @@ if __name__ == "__main__":
     car = KinematicModel()
     car.init_state((300,300,0))
     while(True):
-        print("\rx={}, y={}, v={}, yaw={}, w={}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],str(car.w)[:5]), end="\t")
+        print("\rx={}, y={}, v={}, yaw={}, w={}".format(str(car.x)[:5],str(car.y)[:5],str(car.v)[:5],str(car.yaw)[:5],str(car.w)[:5])+"\t")
         img = np.ones((600,600,3))
         car.update()
         img = car.render(img)

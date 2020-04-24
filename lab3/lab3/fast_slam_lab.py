@@ -37,11 +37,11 @@ class Particle:
         x, y, yaw = self.pos
         # TODO(Lab-5): Compute the prediction of observation.
         # [Hint 1] The parameter "lx,ly" is the location of landmark.
-        ''' 
-        z_r = 
-        z_th = 
+         
+        z_r = np.sqrt((lx-x)**2+(ly-y)**2)
+        z_th = np.arctan2(ly-y,lx-x) -yaw
         z_th = normalize_angle(z_th)
-        '''
+        
         return (z_r, z_th)
 
     # Linearized Observation Matrix
@@ -49,8 +49,12 @@ class Particle:
         x, y, yaw = self.pos
         # TODO(Lab-6): Contruct the matrix of linearized observation model.
         # [Hint 1] The parameter "lx,ly" is the location of landmark.
-        ''' 
-        '''
+        q = (lx-x)**2+(ly-y)**2
+        qq = np.sqrt((lx-x)**2+(ly-y)**2)
+        qx = (lx-x)
+        qy = (ly-y)
+        H = np.array([ [qx/qq, qy/qq], [-qy/q, qx/q] ])
+
         return H
 
     # Update one landmark given the observation
@@ -61,30 +65,33 @@ class Particle:
             # [Hint 1] The parameter "z" is a list of one landmark [r, phi].
             # [Hint 2] The observation noise is "self.Qt (numpy array)".
             # [Hint 3] The mean of landmark "mu" is a numpy array with shape (2,1).
-            ''' 
+             
             c = np.cos(yaw+z[1])
             s = np.sin(yaw+z[1])            
-            mu = 
+            mu = np.array([ [x+z[0]*c],[y+z[0]*s] ])
             H = self.compute_H(mu[0,0], mu[1,0])
             Hinv = np.linalg.inv(H)
-            sig = 
+            sig = Hinv @ self.Qt @ Hinv.T
             self.landmarks[lid] = {"mu":mu, "sig":sig}
-            '''
+            
             p = 1.0
         else:
             # TODO(Lab-8): Update existing landmark (mean and covariance).
-            '''
+            
             mu = self.landmarks[lid]["mu"]
             sig = self.landmarks[lid]["sig"]
             z_hat = self.observation_model(mu[0,0], mu[1,0])
             H = self.compute_H(mu[0,0], mu[1,0])
-            Q = 
-            K = 
-            e = np.array(z) - np.array(z_hat)
+            
+            Q = H @ sig @ H.T + self.Qt
+            K = sig @ H.T @ np.linalg.inv(Q)
+        
+            e = (np.array(z) - np.array(z_hat))
             e[1] = normalize_angle(e[1])
-            self.landmarks[lid]["mu"] = 
-            self.landmarks[lid]["sig"] = 
-            '''
+            
+            self.landmarks[lid]["mu"] = mu + ( K @ e).reshape(2,1)
+            self.landmarks[lid]["sig"] = (np.eye(2)- K @ H ) @ sig
+            
             p = multi_normal(np.array(z).reshape(2,1),np.array(z_hat).reshape(2,1), Q)
         return p
     
@@ -97,7 +104,7 @@ class Particle:
         return likelihood
 
 class ParticleFilter:
-    def __init__(self, init_pos, R, motion_noise, psize=20):
+    def __init__(self, init_pos, R, motion_noise, psize=5):
         self.psize = psize
         self.weights = np.ones(self.psize) / self.psize
         self.particles = []
@@ -127,10 +134,10 @@ class ParticleFilter:
     # Resampling Process
     def resample(self):
         # TODO(Lab-10): Compute Neff for evaluating the particle distribution.
-        # [Hint 1] The particle weight is "self.weight (numpy array)".
-        '''
-        self.Neff = 
-        '''
+        # [Hint 1] The particle weight is "self.weights (numpy array)".
+        
+        self.Neff = 1/ np.sum(self.weights**2)
+        
         if self.Neff < self.psize/2:
             re_id = np.random.choice(self.psize, self.psize, p=list(self.weights))
             new_particles = []
@@ -144,38 +151,39 @@ class ParticleFilter:
 ###################################
 def motion_model(pos, control, motion_noise=[0]*6):
     x, y, yaw = pos
-    v, w, delta_t = control
+    v, w, dt = control
     
     # TODO(Lab-1): Noise Control
-    '''
-    v_hat = v + 
-    w_hat = w + 
+    
+    sig_v = motion_noise[0] * v**2 + motion_noise[1] * w**2
+    sig_w = motion_noise[2] * v**2 + motion_noise[3] * w**2
+    sig_g = motion_noise[4] * v**2 + motion_noise[5] * w**2
+    v_hat = v +  np.sqrt(sig_v)*np.random.randn()
+    w_hat = w +  np.sqrt(sig_w)*np.random.randn()
     w_hat = normalize_angle(w_hat)
-    g_hat = 
-    '''
+    g_hat =  np.sqrt(sig_g)*np.random.randn()
+    
     if w_hat != 0:
         # TODO(Lab-2): motion prediction (with angular velocity)
-        '''
-        x_next = x + 
-        y_next = y + 
-        yaw_next = yaw + 
-        '''
+        x_next = x - v_hat/w_hat*np.sin(yaw) + v_hat/w_hat *np.sin(yaw+w_hat*dt)
+        y_next = y + v_hat/w_hat*np.cos(yaw) - v_hat/w_hat *np.cos(yaw+w_hat*dt)
+        yaw_next = yaw + w_hat *dt + g_hat*dt
+        
     else:
         # TODO(Lab-3): motion prediction (without angular velocity)
-        '''
-        x_next = x +
-        y_next = y +
-        yaw_next = yaw + 
-        '''
+        x_next = x + v_hat*cos(yaw) * dt
+        y_next = y + v_hat * sin(yaw) *dt
+        yaw_next = yaw + g_hat * dt
+        
     return [x_next, y_next, yaw_next]
 
 def multi_normal(x, mean, cov):
     # TODO(Lab-9): Compute likelihood of multivariate normal distribution.
-    '''
+    
     err = x - mean
     err[1,0] = normalize_angle(err[1,0])
-    '''
-    return 1
+    w = np.exp(-0.5*err.T@np.linalg.inv(cov)@err/2/np.pi/np.sqrt(np.linalg.det(cov)))
+    return w
 
 def normalize_angle(ang):
     temp = (ang + np.pi) % (2*np.pi) - np.pi
@@ -234,11 +242,12 @@ def main():
         u = (car.v,car.w,car.dt)
         car.update()
         # TODO(Lab-4): Remove the comment after complete the motion model.
-        '''
+         
         pos_odometry = motion_model(path_odometry[-1], u)
+        
         path_odometry.append(pos_odometry)
-        '''
-        print("\rState: "+car.state_str() + " | Neff:"+str(pf.Neff)[0:7], end="\t")
+        
+        print("\rState: "+car.state_str() + " | Neff:"+str(pf.Neff)[0:7])
 
         ###################################
         # Simulate Observation
@@ -262,11 +271,10 @@ def main():
         # SLAM Algorithm
         ###################################
         # TODO(Lab-0): Remove the comment after complete the class.
-        '''
-        pf.sample(u)
+        
+        pf.sample(u)     
         pf.update(z, landmarks_id)
         pf.resample()
-        '''
 
         ###################################
         # Render Canvas
@@ -296,7 +304,9 @@ def main():
             '''
         # Draw map of best particle
         for lid in pf.particles[bid].landmarks:
-            mean = pf.particles[bid].landmarks[lid]["mu"].reshape(2)
+            
+            mean = pf.particles[bid].landmarks[lid]["mu"].reshape(2,1)
+            
             cov = pf.particles[bid].landmarks[lid]["sig"]
             draw_ellipse(img_, mean, cov, (0,0,1))
         
