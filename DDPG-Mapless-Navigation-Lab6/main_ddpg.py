@@ -13,15 +13,15 @@ RL = ddpg.DDPG(
     reward_decay = 0.99,
     memory_size = 10000,
     batch_size = batch_size)
-'''
+
 is_train = True
-render = False
+render = True
 load_model = False
 '''
 is_train = False
 render = True
 load_model = True
-
+'''
 gif_path = "out/"
 model_path = "save/"
 if not os.path.exists(model_path):
@@ -51,6 +51,7 @@ if __name__ == "__main__":
                 action = RL.choose_action(state, eval=True)
             state_next, reward, done = env.step(action)
             end = 0 if done else 1
+            #Store memory
             RL.store_transition(state, action, reward, state_next, end)
 
             # Render Environment
@@ -58,6 +59,7 @@ if __name__ == "__main__":
 
             # Record and print information
             r_eps.append(reward)
+
             acc_reward += reward
             loss_a = loss_c = 0.
             if total_step > batch_size and is_train:

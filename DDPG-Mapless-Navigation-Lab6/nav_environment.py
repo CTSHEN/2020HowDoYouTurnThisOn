@@ -62,21 +62,26 @@ class NavigationEnv:
         # TODO(Lab-01): Reward Design
         # Distance Reward
         curr_target_dist = np.sqrt((self.car.x - self.target[0])**2 + (self.car.y - self.target[1])**2)
-        reward_dist = 0
+        reward_dist = self.target_dist - curr_target_dist
         # Orientation Reward
-        reward_dist = 0 
+        orien = np.rad2deg(np.arctan2(self.target[1] - self.car.y, self.target[0] - self.car.x))
+        err_orien = (orien - self.car.yaw) % 360
+        if err_orien > 180:
+            err_orien = 360 - err_orien
+        reward_orien = np.deg2rad(err_orien)
+        
         # Action Panelty
-        reward_act = 0 
+        reward_act = 0.05 if action[0]<-0.5 else 0 
         # Total
-        reward = 0 
-
+        reward = 2*reward_dist - 0.1*reward_orien - 10*reward_act 
+        print(reward)
         # Terminal State 
         done = False
         if collision:
-            # reward = 
+            reward = reward -5 
             done = True
         if curr_target_dist < 20:
-            # reward = 
+            reward = reward +5
             done = True
 
         # Relative Coordinate of Target
